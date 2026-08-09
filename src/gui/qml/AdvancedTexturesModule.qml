@@ -11,18 +11,15 @@ Rectangle {
         anchors.margins: 12
         spacing: 16
 
-        Column {
-            spacing: 8
-
-            CaoCheckBox {
-                checked: bridge.mainChecked
-                text: "Process textures"
-                onToggled: (checked) => bridge.mainChecked = checked
-            }
+        CaoGroupBox {
+            width: parent.width
+            title: "Process textures"
+            checkable: true
+            checked: bridge.mainChecked
+            onToggled: (checked) => bridge.mainChecked = checked
 
             Row {
                 visible: bridge.mainChecked
-                leftPadding: 20
                 spacing: 16
 
                 CaoCheckBox {
@@ -45,18 +42,15 @@ Rectangle {
             }
         }
 
-        Column {
-            spacing: 8
-
-            CaoCheckBox {
-                checked: bridge.resizingChecked
-                text: "Resizing"
-                onToggled: (checked) => bridge.resizingChecked = checked
-            }
+        CaoGroupBox {
+            width: parent.width
+            title: "Resizing"
+            checkable: true
+            checked: bridge.resizingChecked
+            onToggled: (checked) => bridge.resizingChecked = checked
 
             Column {
                 visible: bridge.resizingChecked
-                leftPadding: 20
                 spacing: 8
 
                 Row {

@@ -17,5 +17,6 @@
         <file>PatternsManagerWindow.qml</file>
         <file>CaoComboBox.qml</file>
         <file>ProfilesManagerWindow.qml</file>
+        <file>CaoGroupBox.qml</file>
     </qresource>
 </RCC>

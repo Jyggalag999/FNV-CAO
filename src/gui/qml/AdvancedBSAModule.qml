@@ -11,16 +11,15 @@ Rectangle {
         anchors.margins: 12
         spacing: 8
 
-        Text {
-            color: "#d98fe0"
-            font.pixelSize: 13
-            text: "File setting"
-        }
+        CaoGroupBox {
+            width: parent.width
+            title: "File setting"
 
-        CaoCheckBox {
-            checked: bridge.packFile
-            text: "Pack file"
-            onToggled: (checked) => bridge.packFile = checked
+            CaoCheckBox {
+                checked: bridge.packFile
+                text: "Pack file"
+                onToggled: (checked) => bridge.packFile = checked
+            }
         }
     }
 }

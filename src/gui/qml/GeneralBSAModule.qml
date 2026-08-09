@@ -11,18 +11,15 @@ Rectangle {
         anchors.margins: 12
         spacing: 16
 
-        Column {
-            spacing: 8
-
-            CaoCheckBox {
-                checked: bridge.baseChecked
-                text: "Process BSAs"
-                onToggled: (checked) => bridge.baseChecked = checked
-            }
+        CaoGroupBox {
+            width: parent.width
+            title: "Process BSAs"
+            checkable: true
+            checked: bridge.baseChecked
+            onToggled: (checked) => bridge.baseChecked = checked
 
             Row {
                 visible: bridge.baseChecked
-                leftPadding: 20
                 spacing: 24
 
                 CaoRadioButton {
@@ -39,14 +36,9 @@ Rectangle {
             }
         }
 
-        Column {
-            spacing: 8
-
-            Text {
-                color: "#d98fe0"
-                font.pixelSize: 13
-                text: "More"
-            }
+        CaoGroupBox {
+            width: parent.width
+            title: "More"
 
             CaoCheckBox {
                 checked: bridge.dontMakeLoaded

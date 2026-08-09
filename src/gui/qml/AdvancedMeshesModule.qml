@@ -11,27 +11,28 @@ Rectangle {
         anchors.margins: 12
         spacing: 8
 
-        CaoCheckBox {
+        CaoGroupBox {
+            width: parent.width
+            title: "Process meshes"
+            checkable: true
             checked: bridge.baseChecked
-            text: "Process meshes"
             onToggled: (checked) => bridge.baseChecked = checked
-        }
 
-        Row {
-            visible: bridge.baseChecked
-            leftPadding: 20
-            spacing: 24
+            Row {
+                visible: bridge.baseChecked
+                spacing: 24
 
-            CaoRadioButton {
-                checked: !bridge.fullOptimization
-                text: "Recommended"
-                onClicked: bridge.fullOptimization = false
-            }
+                CaoRadioButton {
+                    checked: !bridge.fullOptimization
+                    text: "Recommended"
+                    onClicked: bridge.fullOptimization = false
+                }
 
-            CaoRadioButton {
-                checked: bridge.fullOptimization
-                text: "Extensive"
-                onClicked: bridge.fullOptimization = true
+                CaoRadioButton {
+                    checked: bridge.fullOptimization
+                    text: "Extensive"
+                    onClicked: bridge.fullOptimization = true
+                }
             }
         }
     }

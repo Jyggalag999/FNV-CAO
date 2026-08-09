@@ -11,16 +11,15 @@ Rectangle {
         anchors.margins: 12
         spacing: 8
 
-        Text {
-            color: "#d98fe0"
-            font.pixelSize: 13
-            text: "Base"
-        }
+        CaoGroupBox {
+            width: parent.width
+            title: "Base"
 
-        CaoCheckBox {
-            checked: bridge.necessaryOpt
-            text: "Necessary optimization"
-            onToggled: (checked) => bridge.necessaryOpt = checked
+            CaoCheckBox {
+                checked: bridge.necessaryOpt
+                text: "Necessary optimization"
+                onToggled: (checked) => bridge.necessaryOpt = checked
+            }
         }
     }
 }
