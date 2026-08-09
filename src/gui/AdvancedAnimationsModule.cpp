@@ -5,22 +5,28 @@
 
 #include "AdvancedAnimationsModule.hpp"
 
-#include "ui_AdvancedAnimationsModule.h"
+#include <QQmlContext>
+#include <QQuickWidget>
+#include <QVBoxLayout>
 
 namespace cao {
 AdvancedAnimationsModule::AdvancedAnimationsModule(QWidget *parent)
     : IWindowModule(parent)
-    , ui_(std::make_unique<Ui::AdvancedAnimationsModule>())
 {
-    ui_->setupUi(this);
-}
+    auto *layout = new QVBoxLayout(this); // NOLINT(cppcoreguidelines-owning-memory)
+    layout->setContentsMargins(0, 0, 0, 0);
 
-AdvancedAnimationsModule::~AdvancedAnimationsModule() = default;
+    qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
+    qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
+    qml_widget_->setSource(QUrl("qrc:/qml/AdvancedAnimationsModule.qml"));
+    layout->addWidget(qml_widget_);
+}
 
 void AdvancedAnimationsModule::settings_to_ui(const Settings &settings)
 {
     const auto &pfs = current_per_file_settings(settings);
-    ui_->necessaryOpt->setChecked(pfs.hkx_optimize != OptimizeType::None);
+    bridge_.setNecessaryOpt(pfs.hkx_optimize != OptimizeType::None);
 }
 
 void AdvancedAnimationsModule::ui_to_settings(Settings &settings) const
@@ -31,7 +37,7 @@ void AdvancedAnimationsModule::ui_to_settings(Settings &settings) const
     auto &pfs = current_per_file_settings(settings);
 
     pfs.hkx_target   = settings.current_profile().target_game;
-    pfs.hkx_optimize = ui_->necessaryOpt->isChecked() ? OptimizeType::Normal : OptimizeType::None;
+    pfs.hkx_optimize = bridge_.necessaryOpt() ? OptimizeType::Normal : OptimizeType::None;
 }
 
 auto AdvancedAnimationsModule::is_supported_game(btu::Game game) const noexcept -> bool

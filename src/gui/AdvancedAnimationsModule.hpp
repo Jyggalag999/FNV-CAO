@@ -5,13 +5,12 @@
 
 #pragma once
 
+#include "AdvancedAnimationsBridge.hpp"
 #include "IWindowModule.hpp"
 
 #include <btu/common/games.hpp>
 
-namespace Ui {
-class AdvancedAnimationsModule;
-} // namespace Ui
+class QQuickWidget;
 
 namespace cao {
 class AdvancedAnimationsModule final : public IWindowModule
@@ -27,14 +26,15 @@ public:
     auto operator=(const AdvancedAnimationsModule &) -> AdvancedAnimationsModule & = delete;
     auto operator=(AdvancedAnimationsModule &&) -> AdvancedAnimationsModule      & = delete;
 
-    ~AdvancedAnimationsModule() override;
+    ~AdvancedAnimationsModule() override = default;
 
     [[nodiscard]] auto name() const noexcept -> QString override;
 
     void ui_to_settings(Settings &settings) const override;
 
 private:
-    std::unique_ptr<Ui::AdvancedAnimationsModule> ui_;
+    AdvancedAnimationsBridge bridge_;
+    QQuickWidget *qml_widget_ = nullptr;
 
     void settings_to_ui(const Settings &settings) override;
 

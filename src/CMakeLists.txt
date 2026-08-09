@@ -44,7 +44,8 @@ set(SOURCES
 
         ${SOURCE_DIR}/gui/AdvancedAnimationsModule.cpp
         ${SOURCE_DIR}/gui/AdvancedAnimationsModule.hpp
-        ${SOURCE_DIR}/gui/AdvancedAnimationsModule.ui
+        ${SOURCE_DIR}/gui/AdvancedAnimationsBridge.hpp
+        ${SOURCE_DIR}/gui/AdvancedAnimationsBridge.cpp
         ${SOURCE_DIR}/gui/AdvancedMeshesModule.cpp
         ${SOURCE_DIR}/gui/AdvancedMeshesModule.hpp
         ${SOURCE_DIR}/gui/AdvancedMeshesModule.ui
