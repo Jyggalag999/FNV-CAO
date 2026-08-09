@@ -20,7 +20,7 @@ Rectangle {
         CaoTextField {
             width: parent.width
             text: listModel.filterText
-            onTextChanged: listModel.filterText = text
+            onTextEdited: (text) => listModel.filterText = text
         }
 
         ListView {

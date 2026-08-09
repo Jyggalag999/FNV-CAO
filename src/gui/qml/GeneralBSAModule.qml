@@ -86,7 +86,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     text: bridge.archiveName
                     placeholderText: "Leave blank for automatic naming"
-                    onTextChanged: bridge.archiveName = text
+                    onTextEdited: (text) => bridge.archiveName = text
                 }
             }
         }

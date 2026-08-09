@@ -1,20 +1,28 @@
-// Shared hand-rolled single-line text field, matching CaoCheckBox/CaoRadioButton's conventions.
-// `text` is an alias straight onto the inner TextInput's own text property, not a separate
-// manually-synced one - avoids the usual binding-loop pitfall of hand-rolled text fields (an
-// external `text: bridge.someString` binding breaks cleanly on the first keystroke, same as any
-// plain TextInput bound to a model, no manual sync needed).
+// Shared hand-rolled single-line text field, matching CaoCheckBox's conventions: never assigns
+// to its own bound `text` property (the inner TextInput's own `text` absorbs keystrokes locally,
+// which is unavoidable - the user needs to see what they type - but `root.text` itself stays
+// externally driven). `root.text`'s binding therefore never breaks; instead, its onTextChanged
+// explicitly re-syncs the inner TextInput whenever the bridge-driven value changes from outside,
+// which is what actually needs to happen once the *inner* TextInput's own binding to root.text
+// has been broken by the user's first keystroke (same fundamental issue CaoCheckBox has, just
+// unavoidable at the TextInput leaf instead of avoidable by not self-mutating at all).
 import QtQuick
 
 Item {
     id: root
 
-    property alias text: input.text
+    property string text: ""
     property string placeholderText: ""
 
-    signal editingFinished()
+    signal textEdited(string text)
 
     implicitWidth: 220
     implicitHeight: 24
+
+    onTextChanged: {
+        if (input.text !== text)
+            input.text = text;
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -30,7 +38,8 @@ Item {
             color: "#e6d8ef"
             selectionColor: "#2d5aa5"
             clip: true
-            onEditingFinished: root.editingFinished()
+            text: root.text
+            onTextEdited: root.textEdited(text)
         }
 
         Text {

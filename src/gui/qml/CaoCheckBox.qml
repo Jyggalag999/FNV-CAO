@@ -3,6 +3,12 @@
 // QtQuick.Controls dependency - this app's bespoke theming would need as much custom styling
 // work on top of Controls' Basic style as hand-rolling does, so there's little to gain from it
 // yet. Revisit if/when that stops being true.
+//
+// Deliberately never assigns to its own `checked` property (a click only emits toggled() with
+// the intended new value) - every consumer binds `checked: bridge.someBool` declaratively, and a
+// QML binding is permanently destroyed the instant anything assigns to the bound property
+// imperatively. Self-mutating on click would sever that binding after the first click, so later
+// bridge-driven changes (switching profiles, etc.) would silently stop updating this checkbox.
 import QtQuick
 
 Item {
@@ -47,9 +53,6 @@ Item {
 
     MouseArea {
         anchors.fill: parent
-        onClicked: {
-            root.checked = !root.checked;
-            root.toggled(root.checked);
-        }
+        onClicked: root.toggled(!root.checked)
     }
 }
