@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/qml">
         <file>TopBarBridgeDemo.qml</file>
+        <file>SelectGpuDialog.qml</file>
     </qresource>
 </RCC>

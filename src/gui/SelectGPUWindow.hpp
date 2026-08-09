@@ -5,31 +5,30 @@
 
 #pragma once
 
-#include "ui_SelectGPUWindow.h"
-
-#include <btu/tex/compression_device.hpp>
+#include "SelectGpuBridge.hpp"
 
 #include <QDialog>
 #include <optional>
 
-namespace Ui {
-class SelectGPUWindow;
-} // namespace Ui
+class QQuickWidget;
 
 namespace cao {
+
+/// @brief GPU picker dialog. Step 3 pattern-proof: internals are fully QML now (see
+/// SelectGpuBridge.hpp and src/gui/qml/SelectGpuDialog.qml) - the old Widgets/.ui implementation
+/// is gone. Public API is unchanged from before, so MainWindow's call site didn't need to change.
 class SelectGPUWindow final : public QDialog
 {
     Q_OBJECT
 
 public:
-    static constexpr auto property_key = "Index";
     explicit SelectGPUWindow(QWidget *parent = nullptr);
 
     [[nodiscard]] auto get_selected_index() -> std::optional<uint32_t>;
     void set_selected_index(uint32_t val);
 
 private:
-    std::unique_ptr<Ui::SelectGPUWindow> ui_;
-    std::vector<btu::tex::CompressionDevice::AdapterInfo> devices_;
+    SelectGpuBridge bridge_;
+    QQuickWidget *qml_widget_ = nullptr;
 };
 } // namespace cao

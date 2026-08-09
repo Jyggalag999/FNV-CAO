@@ -5,52 +5,43 @@
 
 #include "SelectGPUWindow.hpp"
 
-#include "gui/utils/utils.hpp"
-
-#include <btu/common/string.hpp>
-
-#include <QRadioButton>
+#include <QQmlContext>
+#include <QQuickWidget>
+#include <QVBoxLayout>
 
 namespace cao {
 using btu::tex::CompressionDevice;
 
 SelectGPUWindow::SelectGPUWindow(QWidget *parent)
     : QDialog(parent)
-    , ui_(std::make_unique<Ui::SelectGPUWindow>())
-    , devices_(CompressionDevice().list_adapters())
+    , bridge_(CompressionDevice().list_adapters())
 {
-    ui_->setupUi(this);
+    setWindowTitle(tr("Select GPU"));
+    resize(400, 300);
 
-    auto *layout = new QVBoxLayout(this); // NOLINT(cppcoreguidelines-owning-memory
-    for (size_t i = 0; i < devices_.size(); i++)
-    {
-        auto *button = new QRadioButton(this); // NOLINT(cppcoreguidelines-owning-memory)
-        button->setText(to_qstring(devices_[i].name));
-        button->setProperty(property_key, QVariant::fromValue(i));
-        layout->addWidget(button);
-    }
-    ui_->groupBox->setLayout(layout);
+    auto *layout = new QVBoxLayout(this); // NOLINT(cppcoreguidelines-owning-memory)
+
+    qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
+    qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
+    qml_widget_->setSource(QUrl("qrc:/qml/SelectGpuDialog.qml"));
+    layout->addWidget(qml_widget_);
+
+    connect(&bridge_, &SelectGpuBridge::accepted, this, &QDialog::accept);
+    connect(&bridge_, &SelectGpuBridge::rejected, this, &QDialog::reject);
 }
 
 auto SelectGPUWindow::get_selected_index() -> std::optional<uint32_t>
 {
-    const auto buttons  = ui_->groupBox->findChildren<QRadioButton *>();
-    const auto selected = std::ranges::find_if(buttons, &QRadioButton::isChecked);
+    const int idx = bridge_.selectedIndex();
+    if (idx < 0)
+        return std::nullopt;
 
-    if (selected != std::cend(buttons))
-        return (*selected)->property(property_key).value<uint32_t>();
-
-    return std::nullopt;
+    return static_cast<uint32_t>(idx);
 }
 
 void SelectGPUWindow::set_selected_index(uint32_t val)
 {
-    const auto buttons  = ui_->groupBox->findChildren<QRadioButton *>();
-    const auto selected = std::ranges::find_if(buttons, [val](QRadioButton *button) {
-        return button->property(property_key).value<uint32_t>() == val;
-    });
-
-    if (selected != std::cend(buttons))
-        (*selected)->setChecked(true);
+    bridge_.setSelectedIndex(static_cast<int>(val));
 }
 } // namespace cao
