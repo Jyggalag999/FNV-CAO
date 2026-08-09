@@ -59,7 +59,8 @@ set(SOURCES
         ${SOURCE_DIR}/gui/AdvancedTexturesModule.ui
         ${SOURCE_DIR}/gui/GeneralBSAModule.cpp
         ${SOURCE_DIR}/gui/GeneralBSAModule.hpp
-        ${SOURCE_DIR}/gui/GeneralBSAModule.ui
+        ${SOURCE_DIR}/gui/GeneralBSABridge.hpp
+        ${SOURCE_DIR}/gui/GeneralBSABridge.cpp
         ${SOURCE_DIR}/gui/ProfilesManagerWindow.cpp
         ${SOURCE_DIR}/gui/ProfilesManagerWindow.hpp
         ${SOURCE_DIR}/gui/ProfilesManagerWindow.ui

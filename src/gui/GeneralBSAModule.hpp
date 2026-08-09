@@ -5,11 +5,10 @@
 
 #pragma once
 
+#include "GeneralBSABridge.hpp"
 #include "IWindowModule.hpp"
 
-namespace Ui {
-class GeneralBSAModule;
-} // namespace Ui
+class QQuickWidget;
 
 namespace cao {
 class GeneralBSAModule final : public IWindowModule
@@ -25,14 +24,15 @@ public:
     auto operator=(const GeneralBSAModule &) -> GeneralBSAModule & = delete;
     auto operator=(GeneralBSAModule &&) -> GeneralBSAModule      & = delete;
 
-    ~GeneralBSAModule() override;
+    ~GeneralBSAModule() override = default;
 
     [[nodiscard]] auto name() const noexcept -> QString override;
 
     void ui_to_settings(Settings &settings) const override;
 
 private:
-    std::unique_ptr<Ui::GeneralBSAModule> ui_;
+    GeneralBSABridge bridge_;
+    QQuickWidget *qml_widget_ = nullptr;
 
     void settings_to_ui(const Settings &settings) override;
 

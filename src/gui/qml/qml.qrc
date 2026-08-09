@@ -7,5 +7,7 @@
         <file>AdvancedBSAModule.qml</file>
         <file>CaoRadioButton.qml</file>
         <file>AdvancedMeshesModule.qml</file>
+        <file>CaoTextField.qml</file>
+        <file>GeneralBSAModule.qml</file>
     </qresource>
 </RCC>

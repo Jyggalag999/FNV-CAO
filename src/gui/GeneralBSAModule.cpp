@@ -5,74 +5,87 @@
 
 #include "GeneralBSAModule.hpp"
 
-#include "ui_GeneralBSAModule.h"
 #include "utils/utils.hpp"
 
-#include <QButtonGroup>
+#include <btu/common/string.hpp>
+
+#include <QQmlContext>
+#include <QQuickWidget>
+#include <QVBoxLayout>
 
 namespace cao {
 GeneralBSAModule::GeneralBSAModule(QWidget *parent)
     : IWindowModule(parent)
-    , ui_(std::make_unique<Ui::GeneralBSAModule>())
 {
-    ui_->setupUi(this);
+    auto *layout = new QVBoxLayout(this); // NOLINT(cppcoreguidelines-owning-memory)
+    layout->setContentsMargins(0, 0, 0, 0);
 
-    connect_group_box(ui_->baseGroupBox, ui_->BSACreate, ui_->BSAExtract);
-
-    auto *button_group = new QButtonGroup(this); // NOLINT(cppcoreguidelines-owning-memory)
-    button_group->addButton(ui_->BSACreate);
-    button_group->addButton(ui_->BSAExtract);
-
-    connect(ui_->baseGroupBox, &QGroupBox::toggled, this, [button_group, this](bool state) {
-        // By default, check bsa create
-        if (state)
-            ui_->BSACreate->setChecked(true);
-    });
+    qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
+    qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
+    qml_widget_->setSource(QUrl("qrc:/qml/GeneralBSAModule.qml"));
+    layout->addWidget(qml_widget_);
 }
-
-GeneralBSAModule::~GeneralBSAModule() = default;
 
 void GeneralBSAModule::settings_to_ui(const Settings &settings)
 {
-    ui_->baseGroupBox->setChecked(true);
     const auto &profile = settings.current_profile();
+
     switch (profile.bsa_operation)
     {
-        case BsaOperation::None: ui_->baseGroupBox->setChecked(false); break;
-        case BsaOperation::Create: ui_->BSACreate->setChecked(true); break;
-        case BsaOperation::Extract: ui_->BSAExtract->setChecked(true); break;
+        case BsaOperation::None:
+            bridge_.setBaseChecked(false);
+            break;
+        case BsaOperation::Create:
+            bridge_.setBaseChecked(true);
+            bridge_.setExtractMode(false);
+            break;
+        case BsaOperation::Extract:
+            bridge_.setBaseChecked(true);
+            bridge_.setExtractMode(true);
+            break;
     }
 
-    ui_->dontMakeLoaded->setChecked(!profile.bsa_make_dummy_plugins);
-    ui_->dontRemoveFiles->setChecked(!profile.bsa_remove_files);
-    ui_->dontCompress->setChecked(!profile.bsa_allow_compression);
+    bridge_.setDontMakeLoaded(!profile.bsa_make_dummy_plugins);
+    bridge_.setDontRemoveFiles(!profile.bsa_remove_files);
+    bridge_.setDontCompress(!profile.bsa_allow_compression);
 
     // Only show override toggle when it makes sense.
     if (profile.target_game != btu::Game::FNV)
     {
-        ui_->makeOverrides->setChecked(false);
-        ui_->makeOverrides->hide();
+        bridge_.setMakeOverrides(false);
+        bridge_.setMakeOverridesVisible(false);
     }
     else
-        ui_->makeOverrides->setChecked(profile.bsa_make_overrides);
+    {
+        bridge_.setMakeOverridesVisible(true);
+        bridge_.setMakeOverrides(profile.bsa_make_overrides);
+    }
+
+    bridge_.setArchiveName(to_qstring(profile.bsa_forced_name.value_or(u8"")));
 }
 
 void GeneralBSAModule::ui_to_settings(Settings &settings) const
 {
-    const bool base = ui_->baseGroupBox->isChecked();
+    const bool base = bridge_.baseChecked();
 
     auto &profile = settings.current_profile();
-    if (base && ui_->BSAExtract->isChecked())
+    if (base && bridge_.extractMode())
         profile.bsa_operation = BsaOperation::Extract;
-    else if (base && ui_->BSACreate->isChecked())
+    else if (base && !bridge_.extractMode())
         profile.bsa_operation = BsaOperation::Create;
     else
         profile.bsa_operation = BsaOperation::None;
 
-    profile.bsa_make_dummy_plugins = !ui_->dontMakeLoaded->isChecked();
-    profile.bsa_remove_files       = !ui_->dontRemoveFiles->isChecked();
-    profile.bsa_allow_compression  = !ui_->dontCompress->isChecked();
-    profile.bsa_make_overrides     = ui_->makeOverrides->isChecked();
+    profile.bsa_make_dummy_plugins = !bridge_.dontMakeLoaded();
+    profile.bsa_remove_files       = !bridge_.dontRemoveFiles();
+    profile.bsa_allow_compression  = !bridge_.dontCompress();
+    profile.bsa_make_overrides     = bridge_.makeOverrides();
+
+    const auto archive_name = bridge_.archiveName().trimmed().toStdString();
+    profile.bsa_forced_name = archive_name.empty()
+                                   ? std::nullopt
+                                   : std::optional{btu::common::as_utf8_string(archive_name)};
 }
 
 auto GeneralBSAModule::is_supported_game(btu::Game game) const noexcept -> bool
