@@ -28,7 +28,8 @@ set(SOURCES
         ${SOURCE_DIR}/settings/profile.hpp
         ${SOURCE_DIR}/gui/ListDialog.cpp
         ${SOURCE_DIR}/gui/ListDialog.hpp
-        ${SOURCE_DIR}/gui/ListDialog.ui
+        ${SOURCE_DIR}/gui/ListDialogModel.hpp
+        ${SOURCE_DIR}/gui/ListDialogModel.cpp
         ${SOURCE_DIR}/gui/LevelSelector.cpp
         ${SOURCE_DIR}/gui/LevelSelector.hpp
         ${SOURCE_DIR}/gui/LevelSelector.ui

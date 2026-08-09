@@ -9,5 +9,6 @@
         <file>AdvancedMeshesModule.qml</file>
         <file>CaoTextField.qml</file>
         <file>GeneralBSAModule.qml</file>
+        <file>ListDialog.qml</file>
     </qresource>
 </RCC>

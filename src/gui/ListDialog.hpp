@@ -5,13 +5,12 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 #pragma once
 
+#include "ListDialogModel.hpp"
+
 #include <QDialog>
 #include <vector>
 
-namespace Ui {
-class ListDialog;
-} // namespace Ui
-
+class QQuickWidget;
 class QListWidgetItem;
 
 namespace cao {
@@ -20,11 +19,7 @@ class ListDialog final : public QDialog
     Q_OBJECT
 
 public:
-    enum class Sorting : std::uint8_t
-    {
-        Text,
-        Insertion
-    };
+    using Sorting = ListDialogModel::Sorting;
 
     explicit ListDialog(Sorting sort_by, QWidget *parent = nullptr);
 
@@ -34,7 +29,7 @@ public:
     auto operator=(const ListDialog &) -> ListDialog & = delete;
     auto operator=(ListDialog &&) -> ListDialog      & = delete;
 
-    ~ListDialog() override;
+    ~ListDialog() override = default;
 
     void add_item(QListWidgetItem *item);
 
@@ -48,10 +43,8 @@ public:
 
 private:
     void add_user_item();
-    void filter_view(const QString &text);
-    [[nodiscard]] auto find_insert_pos(const QListWidgetItem *item) -> int;
 
-    std::unique_ptr<Ui::ListDialog> ui_;
-    Sorting sorting_ = Sorting::Insertion;
+    ListDialogModel model_;
+    QQuickWidget *qml_widget_ = nullptr;
 };
 } // namespace cao
