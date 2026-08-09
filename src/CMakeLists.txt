@@ -69,7 +69,8 @@ set(SOURCES
         ${SOURCE_DIR}/gui/GeneralBSABridge.cpp
         ${SOURCE_DIR}/gui/ProfilesManagerWindow.cpp
         ${SOURCE_DIR}/gui/ProfilesManagerWindow.hpp
-        ${SOURCE_DIR}/gui/ProfilesManagerWindow.ui
+        ${SOURCE_DIR}/gui/ProfilesManagerBridge.hpp
+        ${SOURCE_DIR}/gui/ProfilesManagerBridge.cpp
         ${SOURCE_DIR}/gui/PatternsManagerWindow.cpp
         ${SOURCE_DIR}/gui/PatternsManagerWindow.hpp
         ${SOURCE_DIR}/gui/PatternsManagerModel.hpp

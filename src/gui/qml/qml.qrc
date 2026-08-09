@@ -15,5 +15,7 @@
         <file>LevelSelector.qml</file>
         <file>ProgressWindow.qml</file>
         <file>PatternsManagerWindow.qml</file>
+        <file>CaoComboBox.qml</file>
+        <file>ProfilesManagerWindow.qml</file>
     </qresource>
 </RCC>

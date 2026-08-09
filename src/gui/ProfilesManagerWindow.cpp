@@ -7,74 +7,94 @@
 
 #include "settings/json.hpp"
 #include "settings/settings.hpp"
-#include "ui_ProfilesManagerWindow.h"
 #include "utils/utils.hpp"
 
 #include <flux.hpp>
 
+#include <algorithm>
+
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QQmlContext>
+#include <QQuickWidget>
+#include <QVBoxLayout>
 
 namespace cao {
+
+namespace {
+[[nodiscard]] auto game_names() -> QStringList
+{
+    QStringList names;
+    for (const auto &[name, game] : ProfilesManagerWindow::k_games)
+        names << name;
+    return names;
+}
+} // namespace
+
 ProfilesManagerWindow::ProfilesManagerWindow(Settings &profiles, QWidget *parent)
     : QDialog(parent)
     , profiles_(profiles)
-    , ui_(std::make_unique<Ui::ProfilesManagerWindow>())
+    , bridge_(game_names())
 {
-    ui_->setupUi(this);
+    setWindowTitle(tr("Profiles manager"));
+    resize(336, 198);
 
-    auto &games = *ui_->games;
-    set_data(games, "Morrowind", btu::Game::TES3);
-    set_data(games, "Oblivion", btu::Game::TES4);
-    set_data(games, "Skyrim LE (2011)", btu::Game::SLE);
-    set_data(games, "Skyrim SE (2016)", btu::Game::SSE);
-    set_data(games, "Fallout New Vegas", btu::Game::FNV);
-    set_data(games, "Fallout 4 NG", btu::Game::FO4);
-    set_data(games, "Starfield", btu::Game::Starfield);
+    auto *layout = new QVBoxLayout(this); // NOLINT(cppcoreguidelines-owning-memory)
 
-    connect(ui_->games, &QComboBox::currentIndexChanged, this, [this] {
-        profiles_.current_profile().target_game = ui_->games->currentData().value<btu::Game>();
-    });
+    qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
+    qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
+    qml_widget_->setSource(QUrl("qrc:/qml/ProfilesManagerWindow.qml"));
+    layout->addWidget(qml_widget_);
 
-    connect(ui_->profiles, &QComboBox::currentTextChanged, this, [this](const QString &text) {
-        bool success = profiles_.set_current_profile(to_u8string(text));
-        assert(success);
-        success = select_data(*ui_->games, profiles_.current_profile().target_game);
-        assert(success);
-    });
-
-    connect(ui_->newPushButton, &QPushButton::pressed, this, &ProfilesManagerWindow::create_profile);
-
-    connect(ui_->removePushButton,
-            &QPushButton::pressed,
-            this,
+    connect(&bridge_, &ProfilesManagerBridge::selectProfileRequested, this,
+            &ProfilesManagerWindow::select_profile);
+    connect(&bridge_, &ProfilesManagerBridge::selectGameRequested, this,
+            &ProfilesManagerWindow::select_game);
+    connect(&bridge_, &ProfilesManagerBridge::newProfileRequested, this,
+            &ProfilesManagerWindow::create_profile);
+    connect(&bridge_, &ProfilesManagerBridge::removeProfileRequested, this,
             &ProfilesManagerWindow::delete_current_profile);
-
-    connect(ui_->importPushButton, &QPushButton::pressed, this, &ProfilesManagerWindow::import_profile);
-    connect(ui_->exportPushButton,
-            &QPushButton::pressed,
-            this,
+    connect(&bridge_, &ProfilesManagerBridge::importProfileRequested, this,
+            &ProfilesManagerWindow::import_profile);
+    connect(&bridge_, &ProfilesManagerBridge::exportProfileRequested, this,
             &ProfilesManagerWindow::export_selected_profile);
 
-    update_profiles(*ui_->profiles);
-    const bool success = select_data(*ui_->games, profiles_.current_profile().target_game);
-    assert(success);
+    update_profiles();
 }
 
-ProfilesManagerWindow::~ProfilesManagerWindow() = default;
-
-void ProfilesManagerWindow::update_profiles(QComboBox &box)
+void ProfilesManagerWindow::update_profiles()
 {
-    box.clear();
+    const auto names = flux::from(profiles_.list_profiles())
+                            .map([](const auto &p) { return QString::fromUtf8(p.data(), p.size()); })
+                            .to<QList>();
+    bridge_.setProfileNames(names);
+    bridge_.setCurrentProfile(to_qstring(profiles_.current_profile_name()));
 
-    const auto profiles = flux::from(profiles_.list_profiles())
-                              .map([](const auto &p) { return QString::fromUtf8(p.data(), p.size()); })
-                              .to<QList>();
+    const auto game_it = std::ranges::find(k_games, profiles_.current_profile().target_game,
+                                           &std::pair<const char *, btu::Game>::second);
+    bridge_.setCurrentGameIndex(game_it != k_games.end()
+                                     ? static_cast<int>(std::distance(k_games.begin(), game_it))
+                                     : -1);
+}
 
-    box.addItems(profiles);
-    const bool success = select_text(box, to_qstring(profiles_.current_profile_name()));
+void ProfilesManagerWindow::select_profile(const QString &name)
+{
+    const bool success = profiles_.set_current_profile(to_u8string(name));
     assert(success);
+    (void)success;
+
+    update_profiles();
+}
+
+void ProfilesManagerWindow::select_game(int index)
+{
+    if (index < 0 || static_cast<size_t>(index) >= k_games.size())
+        return;
+
+    profiles_.current_profile().target_game = k_games[static_cast<size_t>(index)].second;
+    bridge_.setCurrentGameIndex(index);
 }
 
 void ProfilesManagerWindow::create_profile()
@@ -87,34 +107,36 @@ void ProfilesManagerWindow::create_profile()
 
     // Choosing base profile
 
-    QStringList profiles_list;
-    const auto &profiles_box = ui_->profiles;
-    for (int i = 0; i < profiles_box->count(); ++i)
-        profiles_list.push_back(profiles_box->itemText(i));
+    const auto &profiles_list = bridge_.profileNames();
+    const int current_index   = static_cast<int>(profiles_list.indexOf(bridge_.currentProfile()));
 
-    const QString base_profile_text = QInputDialog::getItem(this,
-                                                            tr("Base profile"),
-                                                            tr("Which profile do you want to use as a base?"),
-                                                            profiles_list,
-                                                            profiles_box->currentIndex(),
-                                                            false,
-                                                            &ok);
+    bool item_ok               = false;
+    const QString base_profile_text
+        = QInputDialog::getItem(this,
+                                tr("Base profile"),
+                                tr("Which profile do you want to use as a base?"),
+                                profiles_list,
+                                std::max(current_index, 0),
+                                false,
+                                &item_ok);
 
-    if (!ok)
+    if (!item_ok)
         return;
 
     // should be safe to dereference, since we just checked that it exists
     auto base_profile = profiles_.get_profile(to_u8string(base_profile_text)).value();
 
-    this->profiles_.create_profile(to_u8string(text), std::move(base_profile));
+    profiles_.create_profile(to_u8string(text), std::move(base_profile));
     const bool success = profiles_.set_current_profile(to_u8string(text));
     assert(success);
+    (void)success;
+
+    update_profiles();
 }
 
 void ProfilesManagerWindow::delete_current_profile()
-
 {
-    const QString &current = ui_->profiles->currentText();
+    const QString &current = bridge_.currentProfile();
     const auto button      = QMessageBox::warning(
         this,
         tr("Remove profile"),
@@ -125,7 +147,7 @@ void ProfilesManagerWindow::delete_current_profile()
         return;
 
     profiles_.remove(to_u8string(current));
-    update_profiles(*ui_->profiles);
+    update_profiles();
 }
 
 void ProfilesManagerWindow::import_profile()
@@ -134,6 +156,8 @@ void ProfilesManagerWindow::import_profile()
                                                        tr("Import profile"),
                                                        QString(),
                                                        tr("Profiles (*.json)"));
+    if (raw_path.isEmpty())
+        return;
 
     const auto path = btu::Path(to_u8string(raw_path));
 
@@ -146,6 +170,7 @@ void ProfilesManagerWindow::import_profile()
 
     const auto name = path.filename().u8string();
     profiles_.create_profile(name, *std::move(profile));
+    update_profiles();
 }
 
 void ProfilesManagerWindow::export_selected_profile()
@@ -157,8 +182,7 @@ void ProfilesManagerWindow::export_selected_profile()
     if (path.isEmpty())
         return;
 
-    const auto &current = ui_->profiles->currentText();
-    const auto profile  = profiles_.get_profile(to_u8string(current)).value();
+    const auto profile = profiles_.get_profile(to_u8string(bridge_.currentProfile())).value();
 
     if (!json::save_to_file(profile, to_u8string(path)))
         QMessageBox::critical(this, tr("Error"), tr("Failed to save profile"));
