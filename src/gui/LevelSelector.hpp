@@ -4,22 +4,19 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 #pragma once
 
-#include "settings/base_types.hpp"
+#include "LevelSelectorBridge.hpp"
 #include "settings/settings.hpp"
 
-#include <QCoreApplication>
 #include <QDialog>
-#include <array>
 
-namespace Ui {
-class LevelSelector;
-}
+class QQuickWidget;
 
 namespace cao {
 
-class LevelSelector final : QDialog
+class LevelSelector final : public QDialog
 {
-    Q_DECLARE_TR_FUNCTIONS(LevelSelector)
+    Q_OBJECT
+
 public:
     explicit LevelSelector(GuiSettings settings);
 
@@ -29,16 +26,13 @@ public:
     auto operator=(const LevelSelector &) -> LevelSelector & = delete;
     auto operator=(LevelSelector &&) -> LevelSelector      & = delete;
 
-    ~LevelSelector() override;
+    ~LevelSelector() override = default;
 
     [[nodiscard]] auto run_selection() noexcept -> GuiSettings;
 
-    [[maybe_unused]] auto eventFilter(QObject *obj, QEvent *event) noexcept -> bool override;
-
 private:
-    constexpr static auto k_button_property_name = "name";
-
-    std::unique_ptr<Ui::LevelSelector> ui_;
+    LevelSelectorBridge bridge_;
     GuiSettings settings_;
+    QQuickWidget *qml_widget_ = nullptr;
 };
 } // namespace cao
