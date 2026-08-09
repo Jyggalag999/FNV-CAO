@@ -7,6 +7,7 @@
 #include "IWindowModule.hpp"
 #include "ModuleDisplay.hpp"
 #include "ProgressWindow.hpp"
+#include "TopBarBridge.hpp"
 #include "settings/settings.hpp"
 
 #include <QCoreApplication>
@@ -48,14 +49,23 @@ private:
     std::unique_ptr<ProgressWindow> progress_window_;
     ModuleDisplay module_display_{};
 
-    // Step 1 QQuickWidget build/link/embed proof-of-concept. Parented to centralwidget, so Qt
-    // owns/destroys it normally - no manual cleanup needed. Remove once the pattern is proven.
+    // Step 2 bridge: exposes what the (still-Widgets) top bar needs to QML. Declared after
+    // settings_ deliberately - it holds a reference to it, so settings_ must construct first.
+    TopBarBridge top_bar_bridge_;
+
+    // Step 1/2 QQuickWidget scaffold, currently proving TopBarBridge round-trips real Settings
+    // data (see src/gui/qml/TopBarBridgeDemo.qml). Parented to centralwidget, so Qt owns/destroys
+    // it normally - no manual cleanup needed. Remove once the real top bar is ported (see plan).
     QQuickWidget *qml_poc_widget_ = nullptr;
 
     void init_process();
     void stop_process_gracefully();
 
     void save_settings() noexcept;
+
+    // Refreshes the Widgets UI from settings_, same as settings_to_ui() always did, and keeps
+    // top_bar_bridge_'s QML-facing properties in sync with it.
+    void refresh_ui();
 
     void run_gui_selector();
 

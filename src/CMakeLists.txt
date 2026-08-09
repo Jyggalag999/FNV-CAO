@@ -68,6 +68,8 @@ set(SOURCES
         ${SOURCE_DIR}/gui/SelectGPUWindow.ui
         ${SOURCE_DIR}/gui/IWindowModule.hpp
         ${SOURCE_DIR}/gui/IWindowModule.cpp
+        ${SOURCE_DIR}/gui/TopBarBridge.hpp
+        ${SOURCE_DIR}/gui/TopBarBridge.cpp
         ${SOURCE_DIR}/gui/utils/utils.hpp)
 
 set(TS_FILES

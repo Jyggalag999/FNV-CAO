@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/qml">
-        <file>PocRectangle.qml</file>
+        <file>TopBarBridgeDemo.qml</file>
     </qresource>
 </RCC>

@@ -30,6 +30,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QPixmap>
+#include <QQmlContext>
 #include <QQuickWidget>
 
 namespace cao {
@@ -367,6 +368,7 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     : QMainWindow(parent)
     , settings_(std::move(settings))
     , ui_(std::make_unique<Ui::MainWindow>())
+    , top_bar_bridge_(settings_)
 {
     ui_->setupUi(this);
     module_display_.set_tab_widget(ui_->tabWidget);
@@ -375,15 +377,18 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     // so the nebula background has to be drawn on it directly via an event filter, not on `this`.
     ui_->centralwidget->installEventFilter(this);
 
-    // Step 1 QML migration proof-of-concept: a bare QQuickWidget, built/linked/embedded inside
-    // the existing Widgets UI. centralwidget's QVBoxLayout leaves no visible gaps (every pixel is
-    // covered by a real widget), so a full-size widget lowered behind it would be invisible and
-    // prove nothing. Instead this is a fixed corner patch left in normal (topmost) stacking order,
-    // deliberately covering part of the real UI - purely to prove it renders, not real UI.
+    // Step 1/2 QML migration scaffold: a QQuickWidget, built/linked/embedded inside the existing
+    // Widgets UI (Step 1), now also proving top_bar_bridge_'s properties/invokable/signal actually
+    // round-trip against real Settings data (Step 2 - see TopBarBridgeDemo.qml). centralwidget's
+    // QVBoxLayout leaves no visible gaps, so this has to be a fixed corner patch left in normal
+    // (topmost) stacking order, deliberately covering part of the real UI - not real UI itself.
     qml_poc_widget_ = new QQuickWidget(ui_->centralwidget);
     qml_poc_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
     qml_poc_widget_->setGeometry(0, 0, 220, 140);
-    qml_poc_widget_->setSource(QUrl("qrc:/qml/PocRectangle.qml"));
+    qml_poc_widget_->rootContext()->setContextProperty("topBar", &top_bar_bridge_);
+    qml_poc_widget_->setSource(QUrl("qrc:/qml/TopBarBridgeDemo.qml"));
+
+    connect(&top_bar_bridge_, &TopBarBridge::runRequested, this, &MainWindow::init_process);
 
     setAcceptDrops(true);
 
@@ -395,14 +400,14 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     connect(ui_->manageProfiles, &QPushButton::pressed, this, [this] {
         ProfilesManagerWindow profiles_manager(settings_);
         profiles_manager.exec();
-        settings_to_ui(settings_, *ui_, module_display_);
+        refresh_ui();
     });
 
     connect(ui_->managePatterns, &QPushButton::pressed, this, [this] {
         save_settings();
         PatternsManagerWindow patterns_manager(settings_);
         patterns_manager.exec();
-        settings_to_ui(settings_, *ui_, module_display_);
+        refresh_ui();
     });
 
     connect(ui_->actionSelect_GPU, &QAction::triggered, this, [this] {
@@ -454,13 +459,13 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
         }
         // Reset selected pattern to default.
         settings_.gui.selected_pattern = k_default_pattern.text();
-        settings_to_ui(settings_, *ui_, module_display_);
+        refresh_ui();
     });
 
     connect(ui_->patterns, &QComboBox::activated, this, [this]() {
         save_settings();
         settings_.gui.selected_pattern = to_u8string(ui_->patterns->currentText());
-        settings_to_ui(settings_, *ui_, module_display_);
+        refresh_ui();
     });
 
     connect(ui_->processButton, &QPushButton::pressed, this, &MainWindow::init_process);
@@ -480,7 +485,7 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     // first_start(settings_.gui.first_run); // welcome popup disabled
 
     if (settings_.gui.remember_gui_mode)
-        settings_to_ui(settings_, *ui_, module_display_);
+        refresh_ui();
     else
         run_gui_selector();
 }
@@ -596,6 +601,12 @@ void MainWindow::stop_process_gracefully()
     }
 }
 
+void MainWindow::refresh_ui()
+{
+    settings_to_ui(settings_, *ui_, module_display_);
+    top_bar_bridge_.refresh();
+}
+
 void MainWindow::save_settings() noexcept
 {
     ui_to_settings(*ui_, module_display_, settings_);
@@ -610,7 +621,7 @@ void MainWindow::run_gui_selector()
 {
     auto level_selector = LevelSelector(settings_.gui);
     settings_.gui       = level_selector.run_selection();
-    settings_to_ui(settings_, *ui_, module_display_);
+    refresh_ui();
 }
 
 void MainWindow::about() noexcept
