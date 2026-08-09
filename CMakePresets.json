@@ -57,6 +57,10 @@
         "VCPKG_TARGET_TRIPLET": {
           "type": "STRING",
           "value": "x64-windows-static-md-coroutine-abi2"
+        },
+        "VCPKG_INSTALL_OPTIONS": {
+          "type": "STRING",
+          "value": "--x-buildtrees-root=C:/vb"
         }
       },
       "hidden": true,

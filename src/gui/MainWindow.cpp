@@ -27,6 +27,10 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QUrl>
+#include <QPainter>
+#include <QPaintEvent>
+#include <QPixmap>
+#include <QQuickWidget>
 
 namespace cao {
 constexpr static inline auto k_discord_url = "https://discord.gg/SwfTzHGQcy";
@@ -41,7 +45,154 @@ auto get_dark_style_sheet() noexcept -> QString
         PLOG_ERROR << "Cannot set dark style";
         return {};
     }
-    return f.readAll();
+    const QString base = f.readAll();
+
+    // Nebula palette sampled from a real nebula photo: deep magenta body, azure-blue wisps,
+    // burnt-orange/gold rim light, lavender-white star highlights. Layered after the qdarkstyle
+    // base so its widget-chrome icons/arrows keep working; later rules win on equal specificity.
+    static const QString nebula_overrides = R"(
+        QWidget {
+            color: #e6d8ef;
+        }
+        QWidget:disabled {
+            background-color: transparent;
+            color: #6a5a76;
+        }
+        #centralwidget {
+            background-color: transparent;
+        }
+        QMainWindow {
+            background-color: transparent;
+        }
+        QDialog {
+            background-color: #0a0512;
+        }
+        QGroupBox {
+            background-color: #170c26;
+            color: #f0d2e1;
+        }
+        QGroupBox::title {
+            color: #d98fe0;
+        }
+        QGroupBox::indicator {
+            width: 12px;
+            height: 12px;
+        }
+        QPushButton {
+            background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                               stop:0 #3c1450, stop:1 #280028);
+            color: #f0e0f5;
+        }
+        QPushButton:hover {
+            background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                               stop:0 #50145a, stop:1 #3c0032);
+        }
+        QPushButton:pressed {
+            background-color: #962d00;
+        }
+        QPushButton:disabled {
+            background-color: #201530;
+            color: #6a5a76;
+        }
+        QLineEdit, QTextEdit, QPlainTextEdit {
+            background-color: #170c26;
+            border: 1px solid #4a2c6d;
+            border-radius: 3px;
+            color: #e6d8ef;
+            selection-background-color: #2d5aa5;
+        }
+        QSpinBox, QComboBox {
+            background-color: #170c26;
+            color: #e6d8ef;
+            selection-background-color: #2d5aa5;
+        }
+        QLineEdit:focus {
+            border: 1px solid #2d8ae0;
+        }
+        QCheckBox, QRadioButton {
+            background-color: transparent;
+            color: #e6d8ef;
+        }
+        QRadioButton:disabled {
+            background-color: transparent;
+            color: #6a5a76;
+        }
+        QTabWidget::pane {
+            border: 1px solid #4a2c6d;
+            background-color: #0d0818;
+        }
+        QTabBar::tab {
+            background-color: #170c26;
+            color: #c4a8d4;
+        }
+        QTabBar::tab:selected {
+            background-color: #3c1450;
+            color: #f0d2e1;
+        }
+        QTabBar::tab:hover {
+            color: #ffffff;
+        }
+        QListWidget, QTreeWidget, QTableWidget {
+            background-color: #120a1e;
+            border: 1px solid #4a2c6d;
+            alternate-background-color: #170c26;
+        }
+        QListWidget::item:selected, QTreeWidget::item:selected, QTableWidget::item:selected {
+            background-color: #642878;
+            color: #ffffff;
+        }
+        QListWidget::item:hover, QTreeWidget::item:hover {
+            background-color: #3c1450;
+        }
+        QProgressBar {
+            border: 1px solid #642878;
+            border-radius: 3px;
+            background-color: #170c26;
+            text-align: center;
+            color: #f0d2e1;
+        }
+        QProgressBar::chunk {
+            background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                               stop:0 #2d5aa5, stop:0.5 #964fb0, stop:1 #d97a2d);
+            border-radius: 2px;
+        }
+        QMenuBar {
+            background-color: #0a0512;
+            color: #e6d8ef;
+        }
+        QMenuBar::item:selected {
+            background-color: #3c1450;
+        }
+        QMenu {
+            background-color: #170c26;
+            border: 1px solid #642878;
+            color: #e6d8ef;
+        }
+        QMenu::item:selected {
+            background-color: #642878;
+            color: #ffffff;
+        }
+        QScrollBar:vertical, QScrollBar:horizontal {
+            background-color: #0d0818;
+        }
+        QScrollBar::handle {
+            background-color: #4a2c6d;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:hover {
+            background-color: #642878;
+        }
+        QToolTip {
+            background-color: #170c26;
+            border: 1px solid #d97a2d;
+            color: #f0d2e1;
+        }
+        QLabel {
+            color: #e6d8ef;
+        }
+    )";
+
+    return base + nebula_overrides;
 }
 
 auto set_theme(GuiTheme theme) noexcept -> bool
@@ -220,6 +371,20 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     ui_->setupUi(this);
     module_display_.set_tab_widget(ui_->tabWidget);
 
+    // Central widget fully repaints its own region regardless of QMainWindow's own paintEvent,
+    // so the nebula background has to be drawn on it directly via an event filter, not on `this`.
+    ui_->centralwidget->installEventFilter(this);
+
+    // Step 1 QML migration proof-of-concept: a bare QQuickWidget, built/linked/embedded inside
+    // the existing Widgets UI. centralwidget's QVBoxLayout leaves no visible gaps (every pixel is
+    // covered by a real widget), so a full-size widget lowered behind it would be invisible and
+    // prove nothing. Instead this is a fixed corner patch left in normal (topmost) stacking order,
+    // deliberately covering part of the real UI - purely to prove it renders, not real UI.
+    qml_poc_widget_ = new QQuickWidget(ui_->centralwidget);
+    qml_poc_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    qml_poc_widget_->setGeometry(0, 0, 220, 140);
+    qml_poc_widget_->setSource(QUrl("qrc:/qml/PocRectangle.qml"));
+
     setAcceptDrops(true);
 
     // Setting data for widgets
@@ -312,7 +477,7 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     connect(ui_->actionAbout, &QAction::triggered, this, &MainWindow::about);
     connect(ui_->actionAbout_Qt, &QAction::triggered, this, &QApplication::aboutQt);
 
-    first_start(settings_.gui.first_run);
+    // first_start(settings_.gui.first_run); // welcome popup disabled
 
     if (settings_.gui.remember_gui_mode)
         settings_to_ui(settings_, *ui_, module_display_);
@@ -482,6 +647,43 @@ void MainWindow::about() noexcept
     const QString &file_name = e->mimeData()->urls().at(0).toLocalFile();
     if (std::filesystem::is_directory(file_name.toStdString()))
         ui_->inputDirTextEdit->setText(QDir::cleanPath(file_name));
+}
+
+auto MainWindow::eventFilter(QObject *watched, QEvent *event) -> bool
+{
+    if (watched == ui_->centralwidget && event->type() == QEvent::Paint)
+    {
+        auto *central = qobject_cast<QWidget *>(watched);
+
+        static const QPixmap source(":/nebula/galaxy.jpg");
+
+        if (source.isNull())
+        {
+            static bool logged_once = false;
+            if (!logged_once)
+            {
+                PLOG_ERROR << "Nebula background failed to load from :/nebula/galaxy.jpg - "
+                              "resource likely not compiled into the exe (check nebula.qrc is "
+                              "wired into CMakeLists.txt and a full reconfigure was run)";
+                logged_once = true;
+            }
+        }
+        else
+        {
+            QPainter painter(central);
+            const QPixmap scaled = source.scaled(central->size(), Qt::KeepAspectRatioByExpanding,
+                                                 Qt::SmoothTransformation);
+
+            const int x = (central->width() - scaled.width()) / 2;
+            const int y = (central->height() - scaled.height()) / 2;
+
+            painter.drawPixmap(x, y, scaled);
+        }
+
+        return false;
+    }
+
+    return QMainWindow::eventFilter(watched, event);
 }
 
 } // namespace cao

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file>PocRectangle.qml</file>
+    </qresource>
+</RCC>

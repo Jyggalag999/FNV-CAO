@@ -13,6 +13,8 @@
 #include <QMainWindow>
 #include <future>
 
+class QQuickWidget;
+
 namespace Ui {
 class MainWindow;
 } // namespace Ui
@@ -46,6 +48,10 @@ private:
     std::unique_ptr<ProgressWindow> progress_window_;
     ModuleDisplay module_display_{};
 
+    // Step 1 QQuickWidget build/link/embed proof-of-concept. Parented to centralwidget, so Qt
+    // owns/destroys it normally - no manual cleanup needed. Remove once the pattern is proven.
+    QQuickWidget *qml_poc_widget_ = nullptr;
+
     void init_process();
     void stop_process_gracefully();
 
@@ -59,5 +65,6 @@ private:
     [[maybe_unused]] void closeEvent(QCloseEvent *event) override;
     [[maybe_unused]] void dragEnterEvent(QDragEnterEvent *e) override;
     [[maybe_unused]] void dropEvent(QDropEvent *e) override;
+    auto eventFilter(QObject *watched, QEvent *event) -> bool override;
 };
 } // namespace cao

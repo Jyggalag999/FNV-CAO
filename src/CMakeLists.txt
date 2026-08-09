@@ -109,15 +109,30 @@ target_link_libraries(CAO_LIB INTERFACE sago::platform_folders)
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(CAO_LIB INTERFACE fmt::fmt)
 
-find_package(Qt6 COMPONENTS Core Widgets Gui LinguistTools REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Gui REQUIRED)
 target_link_libraries(CAO_LIB INTERFACE Qt6::Core Qt6::Widgets Qt6::Gui)
+
+# QML/Qt Quick: presentation-layer migration target. bethutil/main_process/manager stay untouched;
+# this only lets the Widgets UI host QQuickWidget-embedded QML views incrementally.
+# QmlTools brings in the qmlimportscanner host tool - our vcpkg triplet builds Qt statically, and
+# qt6_import_qml_plugins() (below) needs that tool to find and link static QML plugins.
+find_package(Qt6 COMPONENTS Quick QuickWidgets QmlTools REQUIRED)
+target_link_libraries(CAO_LIB INTERFACE Qt6::Quick Qt6::QuickWidgets)
 
 # Main exe
 add_executable(Cathedral_Assets_Optimizer WIN32
         ${SOURCE_DIR}/main.cpp
         ${DATA_DIR}/styles/Cathedral_Assets_Optimizer.rc
         ${DATA_DIR}/styles/qdarkstyle/style.qrc
+        ${DATA_DIR}/styles/nebula/nebula.qrc
+        ${SOURCE_DIR}/gui/qml/qml.qrc
         bsa_process.hpp bsa_process.cpp
 )
 
 target_link_libraries(Cathedral_Assets_Optimizer PUBLIC CAO_LIB)
+
+# Our vcpkg triplet builds Qt statically, so QML plugins (e.g. qtquick2plugin) come in as plain
+# .lib archives instead of loadable .dll modules - QQmlEngine can't find them by name at runtime
+# without this. qt6_import_qml_plugins() scans the target's compiled-in .qml/.qrc content and
+# links + Q_IMPORT_QML_PLUGIN's whatever static plugins it actually needs.
+qt6_import_qml_plugins(Cathedral_Assets_Optimizer)
