@@ -51,7 +51,8 @@ set(SOURCES
         ${SOURCE_DIR}/gui/AdvancedMeshesModule.ui
         ${SOURCE_DIR}/gui/AdvancedBSAModule.cpp
         ${SOURCE_DIR}/gui/AdvancedBSAModule.hpp
-        ${SOURCE_DIR}/gui/AdvancedBSAModule.ui
+        ${SOURCE_DIR}/gui/AdvancedBSABridge.hpp
+        ${SOURCE_DIR}/gui/AdvancedBSABridge.cpp
         ${SOURCE_DIR}/gui/AdvancedTexturesModule.cpp
         ${SOURCE_DIR}/gui/AdvancedTexturesModule.hpp
         ${SOURCE_DIR}/gui/AdvancedTexturesModule.ui

@@ -5,31 +5,34 @@
 
 #include "AdvancedBSAModule.hpp"
 
-#include "ui_AdvancedBSAModule.h"
-#include "utils/utils.hpp"
-
-#include <QButtonGroup>
+#include <QQmlContext>
+#include <QQuickWidget>
+#include <QVBoxLayout>
 
 namespace cao {
 AdvancedBSAModule::AdvancedBSAModule(QWidget *parent)
     : IWindowModule(parent)
-    , ui_(std::make_unique<Ui::AdvancedBSAModule>())
 {
-    ui_->setupUi(this);
+    auto *layout = new QVBoxLayout(this); // NOLINT(cppcoreguidelines-owning-memory)
+    layout->setContentsMargins(0, 0, 0, 0);
+
+    qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
+    qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
+    qml_widget_->setSource(QUrl("qrc:/qml/AdvancedBSAModule.qml"));
+    layout->addWidget(qml_widget_);
 }
 
-AdvancedBSAModule::~AdvancedBSAModule() = default;
-
 void AdvancedBSAModule::settings_to_ui(const Settings &settings)
-{   
+{
     auto &pfs = current_per_file_settings(settings);
-    ui_->packFile->setChecked(pfs.pack);
+    bridge_.setPackFile(pfs.pack);
 }
 
 void AdvancedBSAModule::ui_to_settings(Settings &settings) const
 {
     auto &pfs = current_per_file_settings(settings);
-    pfs.pack  = ui_->packFile->isChecked();
+    pfs.pack  = bridge_.packFile();
 }
 
 auto AdvancedBSAModule::is_supported_game(btu::Game game) const noexcept -> bool

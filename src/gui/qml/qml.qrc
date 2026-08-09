@@ -4,5 +4,6 @@
         <file>SelectGpuDialog.qml</file>
         <file>CaoCheckBox.qml</file>
         <file>AdvancedAnimationsModule.qml</file>
+        <file>AdvancedBSAModule.qml</file>
     </qresource>
 </RCC>
