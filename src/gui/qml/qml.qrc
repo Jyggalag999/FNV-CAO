@@ -14,5 +14,6 @@
         <file>AdvancedTexturesModule.qml</file>
         <file>LevelSelector.qml</file>
         <file>ProgressWindow.qml</file>
+        <file>PatternsManagerWindow.qml</file>
     </qresource>
 </RCC>

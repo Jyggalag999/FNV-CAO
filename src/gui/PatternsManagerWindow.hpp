@@ -5,32 +5,16 @@
 
 #pragma once
 
+#include "PatternsManagerModel.hpp"
 #include "settings/profile.hpp"
 #include "settings/settings.hpp"
 
-#include <QAbstractItemModel>
 #include <QDialog>
-#include <QListWidget>
-#include <QListWidgetItem>
-class QComboBox;
 
-namespace Ui {
-class PatternsManagerWindow;
-} // namespace Ui
+class QQuickWidget;
 
 namespace cao {
 class Settings;
-
-class PatternItem : public QListWidgetItem
-{
-public:
-    explicit PatternItem(PerFileSettings &pfs, QListWidget *parent = nullptr);
-
-    const std::u8string update_text();
-
-private:
-    PerFileSettings &pfs_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
-};
 
 class PatternsManagerWindow final : public QDialog
 {
@@ -45,17 +29,22 @@ public:
     auto operator=(const PatternsManagerWindow &) -> PatternsManagerWindow & = delete;
     auto operator=(PatternsManagerWindow &&) -> PatternsManagerWindow      & = delete;
 
-    ~PatternsManagerWindow() override; // = default
-
-    void update_patterns(QListWidget &list);
+    ~PatternsManagerWindow() override = default;
 
 private:
-    std::unique_ptr<Ui::PatternsManagerWindow> ui_;
+    PatternsManagerModel model_;
     Settings &settings_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    QQuickWidget *qml_widget_ = nullptr;
 
-    void update_pattern(QListWidgetItem *item);
-    void move_pattern(const QModelIndex, int source_row, int, const QModelIndex, int destination_row);
+    /// Patterns currently configured for the active profile, excluding the default pattern - same
+    /// filter and same order the model is populated in, so row indices from the model always
+    /// index directly into this.
+    [[nodiscard]] auto displayed_patterns() const -> std::vector<PerFileSettings *>;
+
+    void update_patterns();
+    void update_pattern(int row, const QString &new_text);
+    void move_pattern(int source_row, int destination_row);
     void create_pattern();
-    void delete_current_pattern();
+    void delete_pattern(int row);
 };
 } // namespace cao

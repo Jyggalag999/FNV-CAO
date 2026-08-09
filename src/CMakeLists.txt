@@ -72,7 +72,8 @@ set(SOURCES
         ${SOURCE_DIR}/gui/ProfilesManagerWindow.ui
         ${SOURCE_DIR}/gui/PatternsManagerWindow.cpp
         ${SOURCE_DIR}/gui/PatternsManagerWindow.hpp
-        ${SOURCE_DIR}/gui/PatternsManagerWindow.ui
+        ${SOURCE_DIR}/gui/PatternsManagerModel.hpp
+        ${SOURCE_DIR}/gui/PatternsManagerModel.cpp
         ${SOURCE_DIR}/gui/SelectGPUWindow.cpp
         ${SOURCE_DIR}/gui/SelectGPUWindow.hpp
         ${SOURCE_DIR}/gui/SelectGpuBridge.hpp
