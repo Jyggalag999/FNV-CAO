@@ -48,7 +48,8 @@ set(SOURCES
         ${SOURCE_DIR}/gui/AdvancedAnimationsBridge.cpp
         ${SOURCE_DIR}/gui/AdvancedMeshesModule.cpp
         ${SOURCE_DIR}/gui/AdvancedMeshesModule.hpp
-        ${SOURCE_DIR}/gui/AdvancedMeshesModule.ui
+        ${SOURCE_DIR}/gui/AdvancedMeshesBridge.hpp
+        ${SOURCE_DIR}/gui/AdvancedMeshesBridge.cpp
         ${SOURCE_DIR}/gui/AdvancedBSAModule.cpp
         ${SOURCE_DIR}/gui/AdvancedBSAModule.hpp
         ${SOURCE_DIR}/gui/AdvancedBSABridge.hpp

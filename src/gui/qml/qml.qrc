@@ -5,5 +5,7 @@
         <file>CaoCheckBox.qml</file>
         <file>AdvancedAnimationsModule.qml</file>
         <file>AdvancedBSAModule.qml</file>
+        <file>CaoRadioButton.qml</file>
+        <file>AdvancedMeshesModule.qml</file>
     </qresource>
 </RCC>

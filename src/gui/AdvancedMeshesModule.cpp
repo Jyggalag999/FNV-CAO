@@ -5,34 +5,23 @@
 
 #include "AdvancedMeshesModule.hpp"
 
-#include "ui_AdvancedMeshesModule.h"
-#include "utils/utils.hpp"
-
-#include <QButtonGroup>
+#include <QQmlContext>
+#include <QQuickWidget>
+#include <QVBoxLayout>
 
 namespace cao {
 AdvancedMeshesModule::AdvancedMeshesModule(QWidget *parent)
     : IWindowModule(parent)
-    , ui_(std::make_unique<Ui::AdvancedMeshesModule>())
 {
-    ui_->setupUi(this);
+    auto *layout = new QVBoxLayout(this); // NOLINT(cppcoreguidelines-owning-memory)
+    layout->setContentsMargins(0, 0, 0, 0);
 
-    connect_group_box(ui_->mainGroupBox,
-                      ui_->necessaryOptimizationRadioButton,
-                      ui_->fullOptimizationRadioButton);
-
-    auto *button_group = new QButtonGroup(this); // NOLINT(cppcoreguidelines-owning-memory)
-    button_group->addButton(ui_->necessaryOptimizationRadioButton, 1);
-    button_group->addButton(ui_->fullOptimizationRadioButton, 2);
-
-    connect(ui_->mainGroupBox, &QGroupBox::toggled, this, [button_group](bool state) {
-        // By default, the button group will have the last button checked. We don't want that.
-        if (state)
-            button_group->button(1)->setChecked(true);
-    });
+    qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
+    qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
+    qml_widget_->setSource(QUrl("qrc:/qml/AdvancedMeshesModule.qml"));
+    layout->addWidget(qml_widget_);
 }
-
-AdvancedMeshesModule::~AdvancedMeshesModule() = default;
 
 auto AdvancedMeshesModule::name() const noexcept -> QString
 {
@@ -41,24 +30,31 @@ auto AdvancedMeshesModule::name() const noexcept -> QString
 
 void AdvancedMeshesModule::settings_to_ui(const Settings &settings)
 {
-    ui_->mainGroupBox->setChecked(true);
     switch (current_per_file_settings(settings).nif_optimize)
     {
-        case OptimizeType::None: ui_->mainGroupBox->setChecked(false); break;
+        case OptimizeType::None:
+            bridge_.setBaseChecked(false);
+            break;
         case OptimizeType::DryRun:
-        case OptimizeType::Normal: ui_->necessaryOptimizationRadioButton->setChecked(true); break;
-        case OptimizeType::Forced: ui_->fullOptimizationRadioButton->setChecked(true); break;
+        case OptimizeType::Normal:
+            bridge_.setBaseChecked(true);
+            bridge_.setFullOptimization(false);
+            break;
+        case OptimizeType::Forced:
+            bridge_.setBaseChecked(true);
+            bridge_.setFullOptimization(true);
+            break;
     }
 }
 
 void AdvancedMeshesModule::ui_to_settings(Settings &settings) const
 {
     auto &pfs       = current_per_file_settings(settings);
-    const bool base = ui_->mainGroupBox->isChecked();
+    const bool base = bridge_.baseChecked();
 
-    if (base && ui_->necessaryOptimizationRadioButton->isChecked())
+    if (base && !bridge_.fullOptimization())
         pfs.nif_optimize = OptimizeType::Normal;
-    else if (base && ui_->fullOptimizationRadioButton->isChecked())
+    else if (base && bridge_.fullOptimization())
     {
         pfs.nif_optimize = OptimizeType::Forced;
         pfs.nif.optimize = true;

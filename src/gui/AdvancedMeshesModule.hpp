@@ -5,11 +5,10 @@
 
 #pragma once
 
+#include "AdvancedMeshesBridge.hpp"
 #include "IWindowModule.hpp"
 
-namespace Ui {
-class AdvancedMeshesModule;
-} // namespace Ui
+class QQuickWidget;
 
 namespace cao {
 class AdvancedMeshesModule final : public IWindowModule
@@ -24,14 +23,15 @@ public:
     AdvancedMeshesModule(AdvancedMeshesModule &&)                     = delete;
     auto operator=(AdvancedMeshesModule &&) -> AdvancedMeshesModule & = delete;
 
-    ~AdvancedMeshesModule() override;
+    ~AdvancedMeshesModule() override = default;
 
     [[nodiscard]] auto name() const noexcept -> QString override;
 
     void ui_to_settings(Settings &settings) const override;
 
 private:
-    std::unique_ptr<Ui::AdvancedMeshesModule> ui_;
+    AdvancedMeshesBridge bridge_;
+    QQuickWidget *qml_widget_ = nullptr;
 
     void settings_to_ui(const Settings &settings) override;
     [[nodiscard]] auto is_supported_game(btu::Game game) const noexcept -> bool override;
