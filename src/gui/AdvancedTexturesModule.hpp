@@ -4,17 +4,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 #pragma once
 
+#include "AdvancedTexturesBridge.hpp"
 #include "gui/IWindowModule.hpp"
 
 #include <QCoreApplication>
 
-namespace Ui {
-class AdvancedTexturesModule;
-} // namespace Ui
+class QQuickWidget;
 
 namespace cao {
-class ListDialog;
-
 class AdvancedTexturesModule final : public IWindowModule
 {
     Q_OBJECT
@@ -28,15 +25,15 @@ public:
     auto operator=(const AdvancedTexturesModule &) -> AdvancedTexturesModule & = delete;
     auto operator=(AdvancedTexturesModule &&) -> AdvancedTexturesModule      & = delete;
 
-    ~AdvancedTexturesModule() override;
+    ~AdvancedTexturesModule() override = default;
 
     [[nodiscard]] auto name() const noexcept -> QString override;
 
     void ui_to_settings(Settings &settings) const override;
 
 private:
-    std::unique_ptr<Ui::AdvancedTexturesModule> ui_;
-    std::unique_ptr<ListDialog> texture_format_dialog_;
+    AdvancedTexturesBridge bridge_;
+    QQuickWidget *qml_widget_ = nullptr;
 
     void settings_to_ui(const Settings &settings) override;
     [[nodiscard]] auto is_supported_game(btu::Game game) const noexcept -> bool override;

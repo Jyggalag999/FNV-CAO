@@ -10,5 +10,7 @@
         <file>CaoTextField.qml</file>
         <file>GeneralBSAModule.qml</file>
         <file>ListDialog.qml</file>
+        <file>CaoSpinBox.qml</file>
+        <file>AdvancedTexturesModule.qml</file>
     </qresource>
 </RCC>
