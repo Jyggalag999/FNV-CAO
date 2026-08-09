@@ -5,56 +5,16 @@
 
 #pragma once
 
-#include "plog/Severity.h"
+#include "LogReader.hpp"
+#include "ProgressLogModel.hpp"
 
-#include <btu/common/path.hpp>
-
-#include <QFile>
-#include <QMetaType>
-#include <QProgressDialog>
 #include <QTimer>
 #include <QWidget>
 
 class QCloseEvent;
-class QTextStream;
-
-namespace Ui {
-class ProgressWindow;
-} // namespace Ui
-
-Q_DECLARE_METATYPE(plog::Severity)
+class QQuickWidget;
 
 namespace cao {
-
-class LogReader
-{
-public:
-    struct LogEntry
-    {
-        explicit LogEntry(QString line);
-        LogEntry(QString line, plog::Severity severity);
-
-        QString text;
-        plog::Severity severity;
-    };
-
-    explicit LogReader(btu::Path log_file_path);
-
-    [[nodiscard]] auto update() -> std::vector<LogEntry>;
-
-    [[nodiscard]] auto get_log_path() const noexcept -> btu::Path;
-
-private:
-    void advance_to_last_read(QTextStream &log_stream);
-    void update_last_read(QTextStream &ts);
-
-    [[nodiscard]] static auto read_line(QTextStream &log_stream) -> LogEntry;
-
-    QString current_file_first_line_;
-    std::streampos log_read_pos_;
-
-    btu::Path log_file_path_;
-};
 
 class ProgressWindow final : public QWidget
 {
@@ -86,11 +46,12 @@ private:
     QTimer timer_;
 
     LogReader log_reader_;
-    std::unique_ptr<Ui::ProgressWindow> ui_;
+    ProgressLogModel model_;
+    QQuickWidget *qml_widget_ = nullptr;
 
     void update_all();
 
     void update_progress_bar(const QString &text, int max, int value);
-    void update_log(plog::Severity log_severity);
+    void update_log();
 };
 } // namespace cao

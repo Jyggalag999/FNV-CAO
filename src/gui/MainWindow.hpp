@@ -12,6 +12,7 @@
 
 #include <QCoreApplication>
 #include <QMainWindow>
+#include <QProgressDialog>
 #include <future>
 
 class QQuickWidget;

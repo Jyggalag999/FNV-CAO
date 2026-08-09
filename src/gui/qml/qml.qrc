@@ -13,5 +13,6 @@
         <file>CaoSpinBox.qml</file>
         <file>AdvancedTexturesModule.qml</file>
         <file>LevelSelector.qml</file>
+        <file>ProgressWindow.qml</file>
     </qresource>
 </RCC>

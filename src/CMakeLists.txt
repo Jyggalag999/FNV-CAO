@@ -36,7 +36,10 @@ set(SOURCES
         ${SOURCE_DIR}/gui/LevelSelectorBridge.cpp
         ${SOURCE_DIR}/gui/ProgressWindow.cpp
         ${SOURCE_DIR}/gui/ProgressWindow.hpp
-        ${SOURCE_DIR}/gui/ProgressWindow.ui
+        ${SOURCE_DIR}/gui/ProgressLogModel.hpp
+        ${SOURCE_DIR}/gui/ProgressLogModel.cpp
+        ${SOURCE_DIR}/gui/LogReader.hpp
+        ${SOURCE_DIR}/gui/LogReader.cpp
         ${SOURCE_DIR}/gui/MainWindow.cpp
         ${SOURCE_DIR}/gui/MainWindow.hpp
         ${SOURCE_DIR}/gui/MainWindow.ui
