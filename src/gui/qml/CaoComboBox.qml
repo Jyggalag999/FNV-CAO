@@ -76,6 +76,17 @@ ComboBox {
         padding: 0
         margins: 0
 
+        // Explicitly no animation on open/close: this popup only ever has exactly one
+        // background: Rectangle drawing its border (verified directly in this file), and its own
+        // steady-state rendering is a single tight border with nothing else around it - but
+        // QQuickPopup's C++ base can carry a default scale/fade transition regardless of what the
+        // Basic style's own QML sets (it sets none), and a screenshot taken mid-transition would
+        // show a larger, not-yet-settled frame overlapping the final size. Instant, deterministic
+        // show/hide removes that possibility outright, and matches this app's other hand-rolled
+        // controls, none of which animate either.
+        enter: Transition {}
+        exit: Transition {}
+
         // Positions in Overlay.overlay's coordinate space, computed at open time - the point of
         // parenting there (see this file's header comment) is that it's detached from root's own
         // layout/coordinate space, so plain anchoring to root can't reach across that; explicit
