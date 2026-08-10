@@ -29,6 +29,7 @@
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWidget>
+#include <QTimer>
 #include <QUrl>
 
 namespace cao {
@@ -680,6 +681,48 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     // different mode.
     settings_.gui.gui_mode = GuiMode::Advanced;
     refresh_ui();
+
+    // Shrink the window's initial height to fit what refresh_ui() just populated, instead of the
+    // large static default from MainWindow.ui, which left dead space below shorter tabs like BSA
+    // (General).
+    //
+    // QMainWindow::sizeHint() turned out not to be usable for this: it apparently doesn't
+    // propagate a QQuickWidget's content-driven size at all through QStackedWidget/QTabWidget/
+    // centralwidget's layout chain (tried querying it both immediately and after
+    // QCoreApplication::processEvents() and after a deferred 0ms QTimer post-show - all three
+    // read the same too-small value, just enough for the top bar and tab bar, none of the actual
+    // tab content - resize mode is SizeRootObjectToView, meaning the *view* dictates the *root's*
+    // size, not the other way around, so a widget in that mode plausibly never advertises a
+    // content-driven sizeHint of its own in the first place). Measuring real geometry directly
+    // instead, once the window has actually been shown/laid out once (a 0ms QTimer::singleShot,
+    // run right after that first show/paint - main.cpp calls show() right after this constructor
+    // returns - before the user gets a chance to perceive the pre-shrink size): the current tab's
+    // page widget is currently stretched to fill all the leftover vertical space QTabWidget gave
+    // it, while its QML root's implicitHeight (see e.g. GeneralBSAModule.qml) reports how tall it
+    // actually needs to be. Shrinking the window by exactly that difference removes the dead
+    // space without needing to know or recompute anything about the chrome around it (menu bar,
+    // top bar, main group box, tab bar, margins).
+    //
+    // Width is left as MainWindow.ui's declared default (adjustSize() would shrink that too,
+    // based on the same not-usable sizeHint() - not asked for, and it broke the tab bar, forcing
+    // the tab labels to overflow into a horizontal scroll arrow instead of all fitting on one
+    // line).
+    QTimer::singleShot(0, this, [this] {
+        auto *current_tab = ui_->tabWidget->currentWidget();
+        if (!current_tab)
+            return;
+
+        auto *tab_qml_widget = current_tab->findChild<QQuickWidget *>();
+        if (!tab_qml_widget || !tab_qml_widget->rootObject())
+            return;
+
+        const int desired_content_height
+            = static_cast<int>(tab_qml_widget->rootObject()->property("implicitHeight").toReal());
+        const int height_delta           = current_tab->height() - desired_content_height;
+
+        if (height_delta > 0)
+            resize(width(), height() - height_delta);
+    });
 }
 
 /// @brief Checks if the settings are valid. Displays a message box if they are not.

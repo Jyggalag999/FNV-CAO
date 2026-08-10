@@ -9,8 +9,13 @@ import QtQuick
 
 Item {
     anchors.fill: parent
+    // Reports the real content height back up through QQuickWidget::sizeHint() (rootObject()'s
+    // implicitSize, regardless of resize mode) - see AdvancedAnimationsModule.cpp - so MainWindow
+    // can size its initial window height to fit instead of leaving dead space below.
+    implicitHeight: contentBox.height
 
     Rectangle {
+        id: contentBox
         width: parent.width
         height: column.implicitHeight + 24
         color: "#170c26"

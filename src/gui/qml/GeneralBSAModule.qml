@@ -14,6 +14,10 @@ import QtQuick
 Item {
     id: root
     anchors.fill: parent
+    // Reports the real content height back up through QQuickWidget::sizeHint() (rootObject()'s
+    // implicitSize, regardless of resize mode) - see GeneralBSAModule.cpp - so MainWindow can
+    // size its initial window height to fit instead of leaving dead space below.
+    implicitHeight: contentBox.height
 
     // QML-local toggle for the "More" box's own visibility. No corresponding Settings field exists
     // for this - it's a new UI-only control (not present in the original Widgets app) added per
@@ -21,6 +25,7 @@ Item {
     property bool moreChecked: true
 
     Rectangle {
+        id: contentBox
         width: parent.width
         height: column.implicitHeight + 24
         color: "#170c26"
