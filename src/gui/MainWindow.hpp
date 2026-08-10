@@ -15,8 +15,6 @@
 #include <QProgressDialog>
 #include <future>
 
-class QQuickWidget;
-
 namespace Ui {
 class MainWindow;
 } // namespace Ui
@@ -52,12 +50,11 @@ private:
 
     // Step 2 bridge: exposes what the (still-Widgets) top bar needs to QML. Declared after
     // settings_ deliberately - it holds a reference to it, so settings_ must construct first.
+    // The Step 1/2 QQuickWidget scaffold that proved this against real Settings data (see git
+    // history for TopBarBridgeDemo.qml) has been removed now that it's served its purpose - it
+    // was a fixed corner patch deliberately covering part of the real Widgets UI, not real UI
+    // itself. top_bar_bridge_ stays: it's reused as-is when the real top bar is ported (see plan).
     TopBarBridge top_bar_bridge_;
-
-    // Step 1/2 QQuickWidget scaffold, currently proving TopBarBridge round-trips real Settings
-    // data (see src/gui/qml/TopBarBridgeDemo.qml). Parented to centralwidget, so Qt owns/destroys
-    // it normally - no manual cleanup needed. Remove once the real top bar is ported (see plan).
-    QQuickWidget *qml_poc_widget_ = nullptr;
 
     void init_process();
     void stop_process_gracefully();

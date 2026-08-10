@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/qml">
-        <file>TopBarBridgeDemo.qml</file>
         <file>SelectGpuDialog.qml</file>
         <file>CaoCheckBox.qml</file>
         <file>AdvancedAnimationsModule.qml</file>

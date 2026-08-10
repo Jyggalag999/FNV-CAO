@@ -30,8 +30,6 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QPixmap>
-#include <QQmlContext>
-#include <QQuickWidget>
 
 namespace cao {
 constexpr static inline auto k_discord_url = "https://discord.gg/SwfTzHGQcy";
@@ -152,16 +150,32 @@ auto get_dark_style_sheet() noexcept -> QString
             border: 1px solid #4a2c6d;
             background-color: #0d0818;
         }
-        QTabBar::tab {
+        QTabWidget::pane:selected {
+            background-color: #170c26;
+            border: 1px solid #642878;
+        }
+        /* Base qdarkstyle only really styles tabs through its :top/:bottom/:left/:right variants
+           (e.g. QTabBar::tab:top, QTabBar::tab:top:selected) - those are more specific than a
+           plain QTabBar::tab/:selected/:hover (extra pseudo-state), so they always won regardless
+           of cascade order, leaving tabs on qdarkstyle's own gray-blue (#32414B/#505F69) fill with
+           a blue (#1464A0/#148CD2) selected/hover accent. Matching the same :top selectors here
+           (tabs only ever appear on top in this app) recolors them without touching the
+           shape/spacing properties (padding, margins, corner radius) those base rules also set,
+           which are left alone. */
+        QTabBar::tab:top {
             background-color: #170c26;
             color: #c4a8d4;
+            border: 1px solid #4a2c6d;
         }
-        QTabBar::tab:selected {
+        QTabBar::tab:top:selected {
             background-color: #3c1450;
             color: #f0d2e1;
+            border: 1px solid #642878;
         }
-        QTabBar::tab:hover {
+        QTabBar::tab:top:!selected:hover {
+            background-color: #241238;
             color: #ffffff;
+            border: 1px solid #642878;
         }
         QListWidget, QTreeWidget, QTableWidget {
             background-color: #120a1e;
@@ -406,19 +420,6 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     // Central widget fully repaints its own region regardless of QMainWindow's own paintEvent,
     // so the nebula background has to be drawn on it directly via an event filter, not on `this`.
     ui_->centralwidget->installEventFilter(this);
-
-    // Step 1/2 QML migration scaffold: a QQuickWidget, built/linked/embedded inside the existing
-    // Widgets UI (Step 1), now also proving top_bar_bridge_'s properties/invokable/signal actually
-    // round-trip against real Settings data (Step 2 - see TopBarBridgeDemo.qml). centralwidget's
-    // QVBoxLayout leaves no visible gaps, so this has to be a fixed corner patch left in normal
-    // (topmost) stacking order, deliberately covering part of the real UI - not real UI itself.
-    qml_poc_widget_ = new QQuickWidget(ui_->centralwidget);
-    qml_poc_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
-    qml_poc_widget_->setGeometry(0, 0, 220, 140);
-    qml_poc_widget_->rootContext()->setContextProperty("topBar", &top_bar_bridge_);
-    qml_poc_widget_->setSource(QUrl("qrc:/qml/TopBarBridgeDemo.qml"));
-
-    connect(&top_bar_bridge_, &TopBarBridge::runRequested, this, &MainWindow::init_process);
 
     setAcceptDrops(true);
 
