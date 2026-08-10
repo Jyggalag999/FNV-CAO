@@ -86,18 +86,24 @@ ComboBox {
             popup.y = pos.y;
         }
 
+        // Explicitly anchored to the popup's own real bounds (matching Qt's own Popup
+        // customization examples, which always do this) rather than left with no sizing/anchors
+        // of its own - unanchored, it fell back to some other implicit size instead of reliably
+        // matching popup.width/height, so the visible 1px border (drawn by this Rectangle) didn't
+        // match the popup's actual paint/hit-test extent (width/height above).
         background: Rectangle {
+            anchors.fill: parent
             color: "#170c26"
             border.color: "#4a2c6d"
         }
 
+        // Same reasoning as background above - anchors.fill: parent (parent here being popup's
+        // own content area) instead of separately-read width/height, so there's exactly one
+        // source of truth for this popup's real bounds, not two properties that happen to (or
+        // might not) agree.
         contentItem: ListView {
             id: listView
-            // Mirrors popup's own (already-correct, deterministic) size directly, rather than
-            // computing its own implicitHeight from contentHeight - see popup.height's comment
-            // above for why that reads unreliably here.
-            width: popup.width
-            height: popup.height
+            anchors.fill: parent
             clip: true
             model: root.model
             boundsBehavior: Flickable.StopAtBounds
