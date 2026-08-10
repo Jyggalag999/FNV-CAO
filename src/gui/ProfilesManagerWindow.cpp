@@ -18,7 +18,7 @@
 #include <QMessageBox>
 #include <QQmlContext>
 #include <QQuickWidget>
-#include <QVBoxLayout>
+#include <QResizeEvent>
 
 namespace cao {
 
@@ -40,13 +40,14 @@ ProfilesManagerWindow::ProfilesManagerWindow(Settings &profiles, QWidget *parent
     setWindowTitle(tr("Profiles manager"));
     resize(336, 198);
 
-    auto *layout = new QVBoxLayout(this); // NOLINT(cppcoreguidelines-owning-memory)
-
+    // Not layout-managed - see the member declaration in ProfilesManagerWindow.hpp for why.
+    // setGeometry(rect()) fills the dialog exactly like layout->addWidget() would have; kept in
+    // sync as the dialog resizes via resizeEvent() below.
     qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
     qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
     qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
     qml_widget_->setSource(QUrl("qrc:/qml/ProfilesManagerWindow.qml"));
-    layout->addWidget(qml_widget_);
+    qml_widget_->setGeometry(rect());
 
     connect(&bridge_, &ProfilesManagerBridge::selectProfileRequested, this,
             &ProfilesManagerWindow::select_profile);
@@ -62,6 +63,12 @@ ProfilesManagerWindow::ProfilesManagerWindow(Settings &profiles, QWidget *parent
             &ProfilesManagerWindow::export_selected_profile);
 
     update_profiles();
+}
+
+void ProfilesManagerWindow::resizeEvent(QResizeEvent *event)
+{
+    QDialog::resizeEvent(event);
+    qml_widget_->setGeometry(rect());
 }
 
 void ProfilesManagerWindow::update_profiles()

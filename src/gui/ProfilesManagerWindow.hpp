@@ -16,6 +16,7 @@
 #include <utility>
 
 class QQuickWidget;
+class QResizeEvent;
 
 namespace cao {
 class Settings;
@@ -52,6 +53,15 @@ private:
     Settings &profiles_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     ProfilesManagerBridge bridge_;
     QQuickWidget *qml_widget_ = nullptr;
+
+    // Deliberately not layout-managed (see the constructor) - a CaoComboBox popup opening inside
+    // this dialog's small fixed size (336x198) needs more room than that leaves, and MainWindow's
+    // top bar hit exactly this: growing a *layout-managed* QQuickWidget to give an open popup
+    // that extra room pushes every sibling below it down/forces the container to grow, instead of
+    // the popup just floating over whatever's in its way like a real dropdown should. Filling the
+    // dialog manually (setGeometry(), kept in sync via resizeEvent()) sidesteps that class of bug
+    // entirely, the same way MainWindow's top_bar_widget_/nebula_background_widget_ do.
+    [[maybe_unused]] void resizeEvent(QResizeEvent *event) override;
 
     void update_profiles();
 
