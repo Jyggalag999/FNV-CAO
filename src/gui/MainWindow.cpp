@@ -444,7 +444,12 @@ void set_gui_level(ModuleDisplay &modules, const Settings &settings) noexcept
         }
     }
 
-    modules.hide_unsupported(settings.current_profile().target_game);
+    // Deliberately not calling modules.hide_unsupported() here anymore: it used to hide a tab
+    // entirely for any module unsupported by the current profile's game (e.g. Meshes/Animations
+    // tabs vanishing outright), which also hid that the feature existed at all. Each module's own
+    // IWindowModule::setup() already disables itself (setDisabled(true), skipping
+    // settings_to_ui()) when unsupported - visible-but-inert, not gone - which is what's wanted:
+    // an unsupported tab's toggles are still there, they just can't do anything.
 }
 
 void ui_to_settings(const Ui::MainWindow &ui,
@@ -565,8 +570,8 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     // Without this, the layout has no way to know how tall to make an otherwise-empty container
     // whose only content is a QQuickWidget using SizeRootObjectToView (its root's size depends on
     // the view's size, which the layout can't determine without a hint from the root) - it
-    // collapsed topBarContainer to zero height. 76px covers both rows (2 * 26px content + 6px
-    // spacing + 8px top/bottom margins) - see TopBar.qml.
+    // collapsed topBarContainer to zero height. 76px covers both rows (2 * 26px content + 8px
+    // row spacing + 8px top/bottom margins) - see TopBar.qml.
     top_bar_widget_->setMinimumHeight(76);
     top_bar_widget_->rootContext()->setContextProperty("topBar", &top_bar_bridge_);
     top_bar_widget_->setSource(QUrl("qrc:/qml/TopBar.qml"));
@@ -669,10 +674,12 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
 
     // first_start(settings_.gui.first_run); // welcome popup disabled
 
-    if (settings_.gui.remember_gui_mode)
-        refresh_ui();
-    else
-        run_gui_selector();
+    // The Level Selector dialog no longer runs at startup - always launch straight into Advanced
+    // Mode instead. Still reachable afterward via the "Change level" menu action
+    // (actionChange_level, connected to run_gui_selector() above) for anyone who wants a
+    // different mode.
+    settings_.gui.gui_mode = GuiMode::Advanced;
+    refresh_ui();
 }
 
 /// @brief Checks if the settings are valid. Displays a message box if they are not.

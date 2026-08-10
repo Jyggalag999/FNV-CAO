@@ -34,7 +34,10 @@ Rectangle {
     Column {
         anchors.fill: parent
         anchors.margins: 8
-        spacing: 6
+        // Matches anchors.margins above, so the gap above "Pattern" (this spacing, between the
+        // two rows) is identical to the gap above "Profile" (the top margin) and below the last
+        // row (the bottom margin) - previously 6 vs 8, a visible unevenness.
+        spacing: 8
 
         Item {
             width: parent.width
