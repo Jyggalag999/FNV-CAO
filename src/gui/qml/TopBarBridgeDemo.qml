@@ -6,7 +6,7 @@ import QtQuick
 
 Rectangle {
     anchors.fill: parent
-    color: "#20304a"
+    color: "#170c26"
 
     Column {
         anchors.fill: parent

@@ -10,6 +10,10 @@
 // One simplification from the original: title sits above the border rather than inset into the
 // border line (the classic QGroupBox look) - avoids needing to know the parent's background color
 // to mask the border where an inset label would overlap it.
+//
+// Checkable mode collapses the bordered content area entirely when unchecked (not just dims it) -
+// but the title row (which is the only way to re-check it) always stays visible, so unchecking
+// never hides the control needed to check it back on.
 import QtQuick
 
 Item {
@@ -19,12 +23,15 @@ Item {
     property bool checkable: false
     property bool checked: true
 
+    // Whether the bordered content area is showing right now.
+    readonly property bool contentVisible: !root.checkable || root.checked
+
     default property alias content: contentColumn.children
 
     signal toggled(bool checked)
 
     implicitWidth: contentColumn.implicitWidth + 24
-    implicitHeight: titleRow.implicitHeight + 6 + contentColumn.implicitHeight + 24
+    implicitHeight: titleRow.implicitHeight + (root.contentVisible ? 6 + contentColumn.implicitHeight + 24 : 0)
 
     Row {
         id: titleRow
@@ -64,6 +71,7 @@ Item {
     }
 
     Rectangle {
+        visible: root.contentVisible
         anchors.top: titleRow.bottom
         anchors.topMargin: 6
         anchors.left: parent.left
@@ -72,7 +80,6 @@ Item {
         radius: 3
         color: "#120a1e"
         border.color: "#4a2c6d"
-        opacity: (!root.checkable || root.checked) ? 1.0 : 0.6
 
         Column {
             id: contentColumn

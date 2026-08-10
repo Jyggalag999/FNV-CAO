@@ -3,8 +3,14 @@
 import QtQuick
 
 Rectangle {
+    id: root
     anchors.fill: parent
     color: "#170c26"
+
+    // QML-local toggle for the "More" box's own visibility. No corresponding Settings field exists
+    // for this - it's a new UI-only control (not present in the original Widgets app) added per
+    // request to let "More" collapse independently of "Process BSAs".
+    property bool moreChecked: true
 
     Column {
         anchors.fill: parent
@@ -19,7 +25,6 @@ Rectangle {
             onToggled: (checked) => bridge.baseChecked = checked
 
             Row {
-                visible: bridge.baseChecked
                 spacing: 24
 
                 CaoRadioButton {
@@ -39,6 +44,9 @@ Rectangle {
         CaoGroupBox {
             width: parent.width
             title: "More"
+            checkable: true
+            checked: root.moreChecked
+            onToggled: (checked) => root.moreChecked = checked
 
             CaoCheckBox {
                 checked: bridge.dontMakeLoaded
