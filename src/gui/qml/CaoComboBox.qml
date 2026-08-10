@@ -66,7 +66,13 @@ ComboBox {
         parent: Overlay.overlay
         modal: false
         width: root.width
-        height: Math.min(listView.contentHeight, 200)
+        // Deterministic content height - root.count (ComboBox's own, always-accurate item count)
+        // times the delegate's fixed 24px height, capped at 200px with scrolling beyond that.
+        // Previously bound to listView.contentHeight (a ListView/Flickable-computed property)
+        // instead, which didn't reliably reflect the true delegate extent here - it read close to
+        // or at the 200px cap regardless of actual item count, showing a fixed/oversized popup
+        // with empty space below the last real item instead of sizing to content.
+        height: Math.min(root.count * 24, 200)
         padding: 0
         margins: 0
 
@@ -87,8 +93,11 @@ ComboBox {
 
         contentItem: ListView {
             id: listView
-            implicitWidth: popup.width
-            implicitHeight: Math.min(contentHeight, 200)
+            // Mirrors popup's own (already-correct, deterministic) size directly, rather than
+            // computing its own implicitHeight from contentHeight - see popup.height's comment
+            // above for why that reads unreliably here.
+            width: popup.width
+            height: popup.height
             clip: true
             model: root.model
             boundsBehavior: Flickable.StopAtBounds
