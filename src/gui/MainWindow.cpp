@@ -26,10 +26,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QQuickWidget>
 #include <QUrl>
-#include <QPainter>
-#include <QPaintEvent>
-#include <QPixmap>
 
 namespace cao {
 constexpr static inline auto k_discord_url = "https://discord.gg/SwfTzHGQcy";
@@ -572,8 +570,19 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     module_display_.set_tab_widget(ui_->tabWidget);
 
     // Central widget fully repaints its own region regardless of QMainWindow's own paintEvent,
-    // so the nebula background has to be drawn on it directly via an event filter, not on `this`.
+    // so the nebula background has to track it directly via an event filter, not `this` - see
+    // eventFilter()'s QEvent::Resize handling below.
     ui_->centralwidget->installEventFilter(this);
+
+    // Step 5: nebula background, parented directly to centralwidget (not added to its layout) so
+    // it can sit behind the real layout-managed widgets rather than taking its own row. lower()
+    // pushes it to the back of the stacking order now, right after construction, since it would
+    // otherwise be topmost (last child added wins the top of the stack in Qt).
+    nebula_background_widget_ = new QQuickWidget(ui_->centralwidget);
+    nebula_background_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    nebula_background_widget_->setSource(QUrl("qrc:/qml/NebulaBackground.qml"));
+    nebula_background_widget_->setGeometry(ui_->centralwidget->rect());
+    nebula_background_widget_->lower();
 
     setAcceptDrops(true);
 
@@ -847,35 +856,10 @@ void MainWindow::about() noexcept
 
 auto MainWindow::eventFilter(QObject *watched, QEvent *event) -> bool
 {
-    if (watched == ui_->centralwidget && event->type() == QEvent::Paint)
+    if (watched == ui_->centralwidget && event->type() == QEvent::Resize)
     {
         auto *central = qobject_cast<QWidget *>(watched);
-
-        static const QPixmap source(":/nebula/galaxy.jpg");
-
-        if (source.isNull())
-        {
-            static bool logged_once = false;
-            if (!logged_once)
-            {
-                PLOG_ERROR << "Nebula background failed to load from :/nebula/galaxy.jpg - "
-                              "resource likely not compiled into the exe (check nebula.qrc is "
-                              "wired into CMakeLists.txt and a full reconfigure was run)";
-                logged_once = true;
-            }
-        }
-        else
-        {
-            QPainter painter(central);
-            const QPixmap scaled = source.scaled(central->size(), Qt::KeepAspectRatioByExpanding,
-                                                 Qt::SmoothTransformation);
-
-            const int x = (central->width() - scaled.width()) / 2;
-            const int y = (central->height() - scaled.height()) / 2;
-
-            painter.drawPixmap(x, y, scaled);
-        }
-
+        nebula_background_widget_->setGeometry(central->rect());
         return false;
     }
 

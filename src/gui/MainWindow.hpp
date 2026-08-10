@@ -15,6 +15,8 @@
 #include <QProgressDialog>
 #include <future>
 
+class QQuickWidget;
+
 namespace Ui {
 class MainWindow;
 } // namespace Ui
@@ -55,6 +57,14 @@ private:
     // was a fixed corner patch deliberately covering part of the real Widgets UI, not real UI
     // itself. top_bar_bridge_ stays: it's reused as-is when the real top bar is ported (see plan).
     TopBarBridge top_bar_bridge_;
+
+    // Step 5: QML replacement for the old QPainter/eventFilter nebula background (see
+    // src/gui/qml/NebulaBackground.qml). Parented to centralwidget and kept lowered to the back
+    // of its stacking order (see the constructor) so the real layout-managed widgets - groupBox,
+    // inputDirTextEdit, mainGroupBox, tabWidget - paint on top of it, same as the old approach's
+    // gaps-only visibility. Geometry is kept in sync with centralwidget's size via eventFilter()
+    // reacting to QEvent::Resize, since it isn't itself layout-managed.
+    QQuickWidget *nebula_background_widget_ = nullptr;
 
     void init_process();
     void stop_process_gracefully();
