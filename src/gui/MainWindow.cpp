@@ -82,17 +82,21 @@ auto get_dark_style_sheet() noexcept -> QString
         QPushButton {
             background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                                                stop:0 #3c1450, stop:1 #280028);
+            border: 1px solid #4a2c6d;
             color: #f0e0f5;
         }
         QPushButton:hover {
             background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                                                stop:0 #50145a, stop:1 #3c0032);
+            border: 1px solid #642878;
         }
         QPushButton:pressed {
             background-color: #962d00;
+            border: 1px solid #4a2c6d;
         }
         QPushButton:disabled {
             background-color: #201530;
+            border: 1px solid #2a1c3a;
             color: #6a5a76;
         }
         QLineEdit, QTextEdit, QPlainTextEdit {
@@ -102,12 +106,38 @@ auto get_dark_style_sheet() noexcept -> QString
             color: #e6d8ef;
             selection-background-color: #2d5aa5;
         }
+        /* Base qdarkstyle leaves QSpinBox/QComboBox borders at its own default gray-blue
+           (#32414B) since this block only overrode fill/text/selection colors - the border was
+           never brought into the nebula palette. Same background/border fix applied to
+           QComboBox's popup list below. Note: the popup's *selected-item* highlight still shows
+           Windows' native blue on this platform style regardless of selection-background-color -
+           a known Qt/Windows quirk (QComboBox popups mostly bypass QSS under "windowsvista"
+           style) that forcing Fusion only on these widgets "fixed" at the cost of a worse
+           regression (their closed-box chrome fell back to Fusion's plain gray, overriding the
+           rest of this stylesheet) - not worth it for a highlight that's only visible while the
+           popup is open. */
         QSpinBox, QComboBox {
             background-color: #170c26;
+            border: 1px solid #4a2c6d;
             color: #e6d8ef;
             selection-background-color: #2d5aa5;
         }
-        QLineEdit:focus {
+        QSpinBox:disabled, QComboBox:disabled {
+            background-color: #201530;
+            border: 1px solid #2a1c3a;
+            color: #6a5a76;
+        }
+        QComboBox::drop-down {
+            border-left: 1px solid #4a2c6d;
+        }
+        QComboBox QAbstractItemView {
+            background-color: #170c26;
+            border: 1px solid #642878;
+            color: #e6d8ef;
+            selection-background-color: #642878;
+            selection-color: #ffffff;
+        }
+        QLineEdit:focus, QSpinBox:focus, QComboBox:focus {
             border: 1px solid #2d8ae0;
         }
         QCheckBox, QRadioButton {
