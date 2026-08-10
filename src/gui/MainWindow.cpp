@@ -44,7 +44,27 @@ auto get_dark_style_sheet() noexcept -> QString
         PLOG_ERROR << "Cannot set dark style";
         return {};
     }
-    const QString base = f.readAll();
+    QString base = f.readAll();
+
+    // qdarkstyle's own palette (documented in its header comment) repeats these same ~8 hex
+    // colors across ~200 selectors spanning the whole file - borders, disabled states, hover/
+    // pressed/selected accents, scrollbars, menu items, tab variants for all four edges, etc.
+    // nebula_overrides below re-themes the widgets this app actually shows, but several of those
+    // rules kept losing to *more specific* base selectors it didn't know to match (QTabBar::tab:top
+    // beats QTabBar::tab, QScrollBar::handle:vertical beats QScrollBar::handle, QComboBox
+    // QAbstractItemView's own colors get overridden by QComboBox's, etc.) - which is exactly why
+    // gray-blue borders/fills/highlights kept showing through everywhere. Recoloring the base
+    // text in place, before any override rules even get layered on, fixes every one of those
+    // selectors at the source and sidesteps the specificity game entirely - anything still
+    // rendering qdarkstyle's literal color values now renders this app's instead.
+    base.replace(QStringLiteral("#32414B"), QStringLiteral("#4a2c6d"), Qt::CaseInsensitive); // borders (most uses), some fills
+    base.replace(QStringLiteral("#19232D"), QStringLiteral("#170c26"), Qt::CaseInsensitive); // dark fills
+    base.replace(QStringLiteral("#F0F0F0"), QStringLiteral("#e6d8ef"), Qt::CaseInsensitive); // light/white text
+    base.replace(QStringLiteral("#148CD2"), QStringLiteral("#d98fe0"), Qt::CaseInsensitive); // blue hover/selection accent
+    base.replace(QStringLiteral("#787878"), QStringLiteral("#6a5a76"), Qt::CaseInsensitive); // disabled gray text/fills
+    base.replace(QStringLiteral("#1464A0"), QStringLiteral("#642878"), Qt::CaseInsensitive); // blue selected accent
+    base.replace(QStringLiteral("#14506E"), QStringLiteral("#2a1c3a"), Qt::CaseInsensitive); // dim blue (disabled+selected)
+    base.replace(QStringLiteral("#505F69"), QStringLiteral("#50145a"), Qt::CaseInsensitive); // lighter gray-blue fill
 
     // Nebula palette sampled from a real nebula photo: deep magenta body, azure-blue wisps,
     // burnt-orange/gold rim light, lavender-white star highlights. Layered after the qdarkstyle
@@ -102,23 +122,17 @@ auto get_dark_style_sheet() noexcept -> QString
             border: 1px solid #4a2c6d;
             border-radius: 3px;
             color: #e6d8ef;
-            selection-background-color: #2d5aa5;
+            selection-background-color: #642878;
         }
         /* Base qdarkstyle leaves QSpinBox/QComboBox borders at its own default gray-blue
            (#32414B) since this block only overrode fill/text/selection colors - the border was
            never brought into the nebula palette. Same background/border fix applied to
-           QComboBox's popup list below. Note: the popup's *selected-item* highlight still shows
-           Windows' native blue on this platform style regardless of selection-background-color -
-           a known Qt/Windows quirk (QComboBox popups mostly bypass QSS under "windowsvista"
-           style) that forcing Fusion only on these widgets "fixed" at the cost of a worse
-           regression (their closed-box chrome fell back to Fusion's plain gray, overriding the
-           rest of this stylesheet) - not worth it for a highlight that's only visible while the
-           popup is open. */
+           QComboBox's popup list below. */
         QSpinBox, QComboBox {
             background-color: #170c26;
             border: 1px solid #4a2c6d;
             color: #e6d8ef;
-            selection-background-color: #2d5aa5;
+            selection-background-color: #642878;
         }
         QSpinBox:disabled, QComboBox:disabled {
             background-color: #201530;
@@ -135,8 +149,11 @@ auto get_dark_style_sheet() noexcept -> QString
             selection-background-color: #642878;
             selection-color: #ffffff;
         }
+        /* Focus ring was blue (#2d8ae0) - the one interactive state nebula_overrides hadn't
+           actually themed purple yet, so tabbing into (or clicking) a field showed a jarring
+           native-looking blue outline against everything else's purple. */
         QLineEdit:focus, QSpinBox:focus, QComboBox:focus {
-            border: 1px solid #2d8ae0;
+            border: 1px solid #d98fe0;
         }
         QCheckBox, QRadioButton {
             background-color: transparent;
@@ -145,6 +162,143 @@ auto get_dark_style_sheet() noexcept -> QString
         QRadioButton:disabled {
             background-color: transparent;
             color: #6a5a76;
+        }
+        /* QCheckBox/QRadioButton/QMenu's checkable-item indicators are qdarkstyle bitmap icons
+           (checkbox_checked.png etc.) with the gray-blue palette baked into the pixels - QSS text
+           substitution can't recolor an image. Overriding the indicator subcontrols with plain
+           background-color/border (no image) replaces those icons with a flat swatch instead,
+           matching the app's own hand-rolled CaoCheckBox.qml (dark fill, purple border, filled
+           lavender square when checked). Base styles these through two-pseudo-state selectors
+           (QCheckBox::indicator:unchecked:hover, etc.), so matching selectors are needed here too
+           - a single-pseudo-state QCheckBox::indicator:hover would lose to them, same as the
+           QTabBar::tab:top/QScrollBar::handle:vertical specificity issue elsewhere in this sheet.
+           `image` is also a separate property from `background-color`/`border` - the base icon
+           still drew on *top* of a plain background-color override otherwise (as a literal blue
+           checkmark glyph sitting over a correctly-purple square), so every rule below explicitly
+           clears it. */
+        QCheckBox::indicator:unchecked, QCheckBox::indicator:indeterminate {
+            image: none;
+            width: 12px;
+            height: 12px;
+            background-color: #170c26;
+            border: 1px solid #4a2c6d;
+            border-radius: 2px;
+        }
+        QCheckBox::indicator:unchecked:hover, QCheckBox::indicator:unchecked:focus,
+        QCheckBox::indicator:unchecked:pressed,
+        QCheckBox::indicator:indeterminate:hover, QCheckBox::indicator:indeterminate:focus,
+        QCheckBox::indicator:indeterminate:pressed {
+            image: none;
+            border: 1px solid #642878;
+        }
+        QCheckBox::indicator:unchecked:disabled, QCheckBox::indicator:indeterminate:disabled {
+            image: none;
+            background-color: #201530;
+            border: 1px solid #2a1c3a;
+        }
+        QCheckBox::indicator:checked {
+            image: none;
+            width: 12px;
+            height: 12px;
+            background-color: #d98fe0;
+            border: 1px solid #d98fe0;
+            border-radius: 2px;
+        }
+        QCheckBox::indicator:checked:hover, QCheckBox::indicator:checked:focus,
+        QCheckBox::indicator:checked:pressed {
+            image: none;
+            background-color: #f0d2e1;
+            border: 1px solid #f0d2e1;
+        }
+        QCheckBox::indicator:checked:disabled {
+            image: none;
+            background-color: #6a5a76;
+            border: 1px solid #2a1c3a;
+        }
+        QRadioButton::indicator:unchecked {
+            image: none;
+            width: 12px;
+            height: 12px;
+            background-color: #170c26;
+            border: 1px solid #4a2c6d;
+            border-radius: 6px;
+        }
+        QRadioButton::indicator:unchecked:hover, QRadioButton::indicator:unchecked:focus,
+        QRadioButton::indicator:unchecked:pressed {
+            image: none;
+            border: 1px solid #642878;
+        }
+        QRadioButton::indicator:unchecked:disabled {
+            image: none;
+            background-color: #201530;
+            border: 1px solid #2a1c3a;
+        }
+        QRadioButton::indicator:checked {
+            image: none;
+            width: 12px;
+            height: 12px;
+            background-color: #170c26;
+            border: 3px solid #d98fe0;
+            border-radius: 6px;
+        }
+        QRadioButton::indicator:checked:hover, QRadioButton::indicator:checked:focus,
+        QRadioButton::indicator:checked:pressed {
+            image: none;
+            border: 3px solid #f0d2e1;
+        }
+        QRadioButton::indicator:checked:disabled {
+            image: none;
+            background-color: #201530;
+            border: 3px solid #2a1c3a;
+        }
+        QMenu::indicator:non-exclusive:unchecked {
+            image: none;
+            width: 12px;
+            height: 12px;
+            background-color: #170c26;
+            border: 1px solid #4a2c6d;
+            border-radius: 2px;
+        }
+        QMenu::indicator:non-exclusive:unchecked:selected {
+            image: none;
+            border: 1px solid #642878;
+        }
+        QMenu::indicator:non-exclusive:checked {
+            image: none;
+            width: 12px;
+            height: 12px;
+            background-color: #d98fe0;
+            border: 1px solid #d98fe0;
+            border-radius: 2px;
+        }
+        QMenu::indicator:non-exclusive:checked:selected {
+            image: none;
+            background-color: #f0d2e1;
+            border: 1px solid #f0d2e1;
+        }
+        QMenu::indicator:exclusive:unchecked {
+            image: none;
+            width: 12px;
+            height: 12px;
+            background-color: #170c26;
+            border: 1px solid #4a2c6d;
+            border-radius: 6px;
+        }
+        QMenu::indicator:exclusive:unchecked:selected {
+            image: none;
+            border: 1px solid #642878;
+        }
+        QMenu::indicator:exclusive:checked {
+            image: none;
+            width: 12px;
+            height: 12px;
+            background-color: #170c26;
+            border: 3px solid #d98fe0;
+            border-radius: 6px;
+        }
+        QMenu::indicator:exclusive:checked:selected {
+            image: none;
+            border: 3px solid #f0d2e1;
         }
         QTabWidget::pane {
             border: 1px solid #4a2c6d;
