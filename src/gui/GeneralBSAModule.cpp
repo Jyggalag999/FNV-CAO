@@ -9,6 +9,7 @@
 
 #include <btu/common/string.hpp>
 
+#include <QColor>
 #include <QQmlContext>
 #include <QQuickWidget>
 #include <QVBoxLayout>
@@ -22,6 +23,13 @@ GeneralBSAModule::GeneralBSAModule(QWidget *parent)
 
     qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
     qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    // QML content is now sized to fit itself (see GeneralBSAModule.qml), not the full tab page,
+    // so there's leftover space below it whenever the page is taller than the content. A
+    // QQuickWidget doesn't composite with sibling widgets behind it - unpainted QML area just
+    // shows the widget's own clear color, which defaults to white - so this has to be set
+    // explicitly to match QTabWidget::pane's background (MainWindow.cpp's nebula_overrides)
+    // rather than relying on "transparency" to reveal anything real underneath.
+    qml_widget_->setClearColor(QColor("#0d0818"));
     qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
     qml_widget_->setSource(QUrl("qrc:/qml/GeneralBSAModule.qml"));
     layout->addWidget(qml_widget_);

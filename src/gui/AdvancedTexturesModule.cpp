@@ -9,6 +9,7 @@
 
 #include <btu/common/algorithms.hpp>
 
+#include <QColor>
 #include <QQmlContext>
 #include <QQuickWidget>
 #include <QVBoxLayout>
@@ -22,6 +23,10 @@ AdvancedTexturesModule::AdvancedTexturesModule(QWidget *parent)
 
     qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
     qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    // QML content is content-sized now, not full-page (see AdvancedTexturesModule.qml /
+    // GeneralBSAModule.cpp for the full rationale) - matches QTabWidget::pane's own background
+    // instead of defaulting to QQuickWidget's white clear color for the leftover space.
+    qml_widget_->setClearColor(QColor("#0d0818"));
     qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
     qml_widget_->setSource(QUrl("qrc:/qml/AdvancedTexturesModule.qml"));
     layout->addWidget(qml_widget_);
