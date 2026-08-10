@@ -74,10 +74,19 @@ private:
     // reacting to QEvent::Resize, since it isn't itself layout-managed.
     QQuickWidget *nebula_background_widget_ = nullptr;
 
-    // Step 5: real top bar (see src/gui/qml/TopBar.qml), embedded in topBarContainer like any
-    // module tab. Kept as members (rather than constructor-locals) because
-    // on_top_bar_popup_open_changed() below needs to reach both: TopBar.qml's root aggregates its
-    // combo boxes' popup-open state into a plain QML property (anyPopupOpen), not a compile-time
+    // Step 5: real top bar (see src/gui/qml/TopBar.qml). Parented directly to centralwidget and
+    // manually positioned/sized (see sync_top_bar_widget_geometry()) rather than added to
+    // topBarContainer's layout, same reasoning as nebula_background_widget_ below:
+    // on_top_bar_popup_open_changed() grows this widget while a dropdown is open so its popup
+    // isn't clipped (a QQuickWidget can't render content past its own bounds, unlike a native
+    // QComboBox's popup, which is its own top-level window) - growing a *layout-managed* widget
+    // necessarily pushes every sibling below it down, which is exactly the bug this avoids.
+    // topBarContainer stays in the layout as a fixed-height (76px) placeholder purely to reserve
+    // the right amount of space for the closed state; the real widget floats above it (raised, in
+    // centralwidget's stacking order) and overlaps mainGroupBox/tabWidget while a popup is open,
+    // instead of pushing them down. Kept as members (rather than constructor-locals) because
+    // on_top_bar_popup_open_changed() needs to reach both: TopBar.qml's root aggregates its combo
+    // boxes' popup-open state into a plain QML property (anyPopupOpen), not a compile-time
     // Q_PROPERTY, so connecting to its change notification from C++ needs the old string-based
     // SIGNAL()/SLOT() syntax - which requires an actual slot method, not a lambda.
     QQuickWidget *top_bar_widget_ = nullptr;
@@ -100,6 +109,13 @@ private:
     // popup, which is its own top-level window) - grows top_bar_widget_ while a dropdown is open
     // so it isn't clipped, then shrinks it back, instead of permanently reserving that space.
     Q_SLOT void on_top_bar_popup_open_changed();
+
+    // Repositions/resizes top_bar_widget_ to match topBarContainer's current placement (x/y/
+    // width - called from eventFilter() on topBarContainer's QEvent::Resize) while independently
+    // choosing its own height based on whether a dropdown is currently open (76px closed, 300px
+    // while any popup needs room) - called from both eventFilter() and
+    // on_top_bar_popup_open_changed(), since either can happen without the other.
+    void sync_top_bar_widget_geometry();
 
     // Qt override
     [[maybe_unused]] void closeEvent(QCloseEvent *event) override;

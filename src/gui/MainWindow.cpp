@@ -550,8 +550,11 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
 
     // Central widget fully repaints its own region regardless of QMainWindow's own paintEvent,
     // so the nebula background has to track it directly via an event filter, not `this` - see
-    // eventFilter()'s QEvent::Resize handling below.
+    // eventFilter()'s QEvent::Resize handling below. topBarContainer is also watched, to keep
+    // top_bar_widget_'s geometry (also not layout-managed - see its own declaration) in sync with
+    // its reserved placeholder space as the window resizes.
     ui_->centralwidget->installEventFilter(this);
+    ui_->topBarContainer->installEventFilter(this);
 
     // Step 5: nebula background, parented directly to centralwidget (not added to its layout) so
     // it can sit behind the real layout-managed widgets rather than taking its own row. lower()
@@ -563,24 +566,30 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     nebula_background_widget_->setGeometry(ui_->centralwidget->rect());
     nebula_background_widget_->lower();
 
-    // Step 5: real top bar, replacing the old native profiles/patterns QGroupBox - added into
-    // topBarContainer's (empty, zero-margin) layout the same way every module embeds its QML,
-    // unlike nebula_background_widget_ above which deliberately isn't layout-managed.
-    top_bar_widget_ = new QQuickWidget(ui_->topBarContainer);
+    // Step 5: real top bar, replacing the old native profiles/patterns QGroupBox. topBarContainer
+    // stays in centralwidget's layout as a fixed-height placeholder (76px - covers both rows: 2 *
+    // 26px content + 8px row spacing + 8px top/bottom margins, see TopBar.qml) purely to reserve
+    // the right amount of space for the closed state; top_bar_widget_ itself is parented directly
+    // to centralwidget instead of into topBarContainer's layout - like nebula_background_widget_
+    // above, not layout-managed - and manually kept aligned with topBarContainer's position/width
+    // (see sync_top_bar_widget_geometry(), called from eventFilter()'s QEvent::Resize handling
+    // below). That split is what lets it grow taller than topBarContainer's reserved 76px while a
+    // popup is open (see on_top_bar_popup_open_changed()) without pushing mainGroupBox/tabWidget
+    // down - it isn't part of the layout at all, so growing it can only ever overlap whatever's
+    // below (which raise() ensures renders on top of, correctly), never displace it.
+    ui_->topBarContainer->setFixedHeight(76);
+
+    top_bar_widget_ = new QQuickWidget(ui_->centralwidget);
     top_bar_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
-    // Without this, the layout has no way to know how tall to make an otherwise-empty container
-    // whose only content is a QQuickWidget using SizeRootObjectToView (its root's size depends on
-    // the view's size, which the layout can't determine without a hint from the root) - it
-    // collapsed topBarContainer to zero height. 76px covers both rows (2 * 26px content + 8px
-    // row spacing + 8px top/bottom margins) - see TopBar.qml.
-    top_bar_widget_->setMinimumHeight(76);
     top_bar_widget_->rootContext()->setContextProperty("topBar", &top_bar_bridge_);
     top_bar_widget_->setSource(QUrl("qrc:/qml/TopBar.qml"));
-    ui_->topBarContainer->layout()->addWidget(top_bar_widget_);
 
     top_bar_root_ = top_bar_widget_->rootObject();
     if (top_bar_root_)
         connect(top_bar_root_, SIGNAL(anyPopupOpenChanged()), this, SLOT(on_top_bar_popup_open_changed()));
+
+    sync_top_bar_widget_geometry();
+    top_bar_widget_->raise();
 
     setAcceptDrops(true);
 
@@ -897,8 +906,17 @@ void MainWindow::about() noexcept
 
 void MainWindow::on_top_bar_popup_open_changed()
 {
-    const bool any_popup_open = top_bar_root_->property("anyPopupOpen").toBool();
-    top_bar_widget_->setFixedHeight(any_popup_open ? 300 : 76);
+    sync_top_bar_widget_geometry();
+}
+
+void MainWindow::sync_top_bar_widget_geometry()
+{
+    const bool any_popup_open = top_bar_root_ && top_bar_root_->property("anyPopupOpen").toBool();
+    const QRect container_rect = ui_->topBarContainer->geometry();
+    top_bar_widget_->setGeometry(container_rect.x(),
+                                 container_rect.y(),
+                                 container_rect.width(),
+                                 any_popup_open ? 300 : 76);
 }
 
 auto MainWindow::eventFilter(QObject *watched, QEvent *event) -> bool
@@ -907,6 +925,12 @@ auto MainWindow::eventFilter(QObject *watched, QEvent *event) -> bool
     {
         auto *central = qobject_cast<QWidget *>(watched);
         nebula_background_widget_->setGeometry(central->rect());
+        return false;
+    }
+
+    if (watched == ui_->topBarContainer && event->type() == QEvent::Resize)
+    {
+        sync_top_bar_widget_geometry();
         return false;
     }
 
