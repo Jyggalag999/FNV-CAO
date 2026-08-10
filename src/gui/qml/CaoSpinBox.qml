@@ -31,7 +31,7 @@ Item {
         anchors.fill: parent
         radius: 3
         color: "#170c26"
-        border.color: input.activeFocus ? "#2d8ae0" : "#4a2c6d"
+        border.color: input.activeFocus ? "#d98fe0" : "#4a2c6d"
         opacity: root.enabled ? 1.0 : 0.5
 
         TextInput {

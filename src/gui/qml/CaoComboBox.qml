@@ -11,6 +11,12 @@ Item {
     property int currentIndex: -1
     property string placeholderText: "Select..."
 
+    // Exposed so a host embedding this in a tightly-sized QQuickWidget (one not already big
+    // enough to have slack room below the box) can grow itself while the popup is open - see
+    // TopBar.qml/MainWindow.cpp, where the popup was otherwise getting clipped by the view's own
+    // bounds. Not needed when there's already plenty of room (e.g. ProfilesManagerWindow.qml).
+    readonly property alias popupOpen: popup.visible
+
     signal activated(int index)
 
     implicitWidth: 200
@@ -21,7 +27,7 @@ Item {
         anchors.fill: parent
         radius: 3
         color: "#170c26"
-        border.color: boxArea.containsMouse ? "#2d8ae0" : "#4a2c6d"
+        border.color: boxArea.containsMouse ? "#d98fe0" : "#4a2c6d"
 
         Text {
             anchors.left: parent.left

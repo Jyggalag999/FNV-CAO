@@ -15,6 +15,7 @@
 #include <QProgressDialog>
 #include <future>
 
+class QQuickItem;
 class QQuickWidget;
 
 namespace Ui {
@@ -27,7 +28,14 @@ class Settings;
 
 class MainWindow final : public QMainWindow
 {
-    Q_DECLARE_TR_FUNCTIONS(MainWindow)
+    // Needed for on_top_bar_popup_open_changed() below: it's reached via a string-based SLOT()
+    // connection (see the constructor), which requires MOC to have generated a meta-call entry
+    // for it. Every other connection in this class is modern pointer-to-member/functor style,
+    // which doesn't need Q_OBJECT on the receiver - this is the first one that does. Supersedes
+    // (and conflicts with, if both are present) the old Q_DECLARE_TR_FUNCTIONS(MainWindow) - that
+    // macro is for non-QObject classes that still want scoped tr(); Q_OBJECT already provides one
+    // scoped to "MainWindow" via this class's own metaObject.
+    Q_OBJECT
 
 public:
     explicit MainWindow(Settings settings, QWidget *parent = nullptr);
@@ -66,6 +74,15 @@ private:
     // reacting to QEvent::Resize, since it isn't itself layout-managed.
     QQuickWidget *nebula_background_widget_ = nullptr;
 
+    // Step 5: real top bar (see src/gui/qml/TopBar.qml), embedded in topBarContainer like any
+    // module tab. Kept as members (rather than constructor-locals) because
+    // on_top_bar_popup_open_changed() below needs to reach both: TopBar.qml's root aggregates its
+    // combo boxes' popup-open state into a plain QML property (anyPopupOpen), not a compile-time
+    // Q_PROPERTY, so connecting to its change notification from C++ needs the old string-based
+    // SIGNAL()/SLOT() syntax - which requires an actual slot method, not a lambda.
+    QQuickWidget *top_bar_widget_ = nullptr;
+    QQuickItem *top_bar_root_     = nullptr;
+
     void init_process();
     void stop_process_gracefully();
 
@@ -78,6 +95,11 @@ private:
     void run_gui_selector();
 
     void about() noexcept;
+
+    // A QQuickWidget can't render content past its own bounds (unlike a native QComboBox's
+    // popup, which is its own top-level window) - grows top_bar_widget_ while a dropdown is open
+    // so it isn't clipped, then shrinks it back, instead of permanently reserving that space.
+    Q_SLOT void on_top_bar_popup_open_changed();
 
     // Qt override
     [[maybe_unused]] void closeEvent(QCloseEvent *event) override;

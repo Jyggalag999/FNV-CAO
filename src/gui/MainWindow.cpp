@@ -26,6 +26,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QQmlContext>
+#include <QQuickItem>
 #include <QQuickWidget>
 #include <QUrl>
 
@@ -410,31 +412,15 @@ auto set_theme(GuiTheme theme) noexcept -> bool
     return true;
 }
 
-void set_patterns_enabled(Ui::MainWindow &ui, bool state) noexcept
-{
-    const std::array patterns_object = std::to_array<QWidget *>({
-        ui.patterns,
-        ui.managePatterns,
-        ui.patternsLabel,
-    });
-
-    for (auto *widget : patterns_object)
-    {
-        widget->setEnabled(state);
-        widget->setVisible(state);
-    }
-}
-
-void set_gui_level(ModuleDisplay &modules, Ui::MainWindow &ui, const Settings &settings) noexcept
+// Step 5: pattern-row and Manage-Profiles-button visibility (formerly toggled here via
+// set_patterns_enabled()/ui.manageProfiles->setHidden()) are now computed live by
+// TopBarBridge::patternsVisible()/manageProfilesVisible() straight from settings.gui.gui_mode -
+// nothing to push into the (now QML) top bar from here anymore.
+void set_gui_level(ModuleDisplay &modules, const Settings &settings) noexcept
 {
     modules.clear_modules();
-    set_patterns_enabled(ui, /*state=*/false);
 
-    const auto level = settings.gui.gui_mode;
-
-    ui.manageProfiles->setHidden(level == GuiMode::QuickOptimize);
-
-    switch (level)
+    switch (settings.gui.gui_mode)
     {
         case GuiMode::QuickOptimize:
         {
@@ -454,7 +440,6 @@ void set_gui_level(ModuleDisplay &modules, Ui::MainWindow &ui, const Settings &s
             modules.add_module(std::make_unique<AdvancedMeshesModule>());
             modules.add_module(std::make_unique<AdvancedTexturesModule>());
             modules.add_module(std::make_unique<AdvancedAnimationsModule>());
-            set_patterns_enabled(ui, /*state=*/true);
             break;
         }
     }
@@ -462,7 +447,10 @@ void set_gui_level(ModuleDisplay &modules, Ui::MainWindow &ui, const Settings &s
     modules.hide_unsupported(settings.current_profile().target_game);
 }
 
-void ui_to_settings(const Ui::MainWindow &ui, const ModuleDisplay &module_display, Settings &settings)
+void ui_to_settings(const Ui::MainWindow &ui,
+                    const TopBarBridge &top_bar_bridge,
+                    const ModuleDisplay &module_display,
+                    Settings &settings)
 {
     settings.gui.gui_theme = ui.actionEnableDarkTheme->isChecked() ? GuiTheme::Dark : GuiTheme::Light;
 
@@ -470,9 +458,13 @@ void ui_to_settings(const Ui::MainWindow &ui, const ModuleDisplay &module_displa
     {
         case GuiMode::QuickOptimize:
         {
-            if (ui.profiles->currentText() == "SLE")
+            // Step 5: profiles is QML now (TopBar.qml) - top_bar_bridge_.currentProfile() is the
+            // same underlying value the old ui.profiles->currentText() read, since both are
+            // ultimately driven by settings.current_profile_name() (see settings_to_ui() before
+            // this change, and TopBarBridge::currentProfile() now).
+            if (top_bar_bridge.currentProfile() == "SLE")
                 settings.current_profile() = Profile::make_base(btu::Game::SLE);
-            else if (ui.profiles->currentText() == "SSE")
+            else if (top_bar_bridge.currentProfile() == "SSE")
                 settings.current_profile() = Profile::make_base(btu::Game::SSE);
             else
                 throw UiException("Invalid profile selected");
@@ -501,37 +493,18 @@ void settings_to_ui(const Settings &settings, Ui::MainWindow &ui, ModuleDisplay 
     // Cache current index to keep selected tab if possible.
     const auto old_tab_index = module_display.current_index();
 
-    set_gui_level(module_display, ui, settings);
+    set_gui_level(module_display, settings);
 
     ui.inputDirTextEdit->setText(to_qstring(settings.current_profile().input_path.u8string()));
     ui.dryRunCheckBox->setChecked(settings.current_profile().dry_run);
-    bool success = select_data(*ui.modeChooserComboBox, settings.current_profile().optimization_mode);
+    [[maybe_unused]] const bool success
+        = select_data(*ui.modeChooserComboBox, settings.current_profile().optimization_mode);
     assert(success);
 
-    const auto profiles = [&settings]() -> std::vector<std::u8string_view> {
-        using namespace std::literals;
-
-        switch (settings.gui.gui_mode)
-        {
-            case GuiMode::QuickOptimize: return {u8"SLE"sv, u8"SSE"sv};
-            case GuiMode::Medium: [[fallthrough]];
-            case GuiMode::Advanced: [[fallthrough]];
-            default: return settings.list_profiles();
-        }
-    }();
-
-    set_items(*ui.profiles, profiles, to_qstring);
-
-    set_items(*ui.patterns, settings.current_profile().per_file_settings(), [](const auto *pfs) {
-        return to_qstring(pfs->pattern.text());
-    });
-
-    success = select_text(*ui.patterns, to_qstring(current_per_file_settings(settings).pattern.text()));
-    assert(success);
-
-    success = select_text(*ui.profiles, to_qstring(settings.current_profile_name()));
-    if (!success)
-        success = select_text(*ui.profiles, to_qstring(profiles.at(0)));
+    // Step 5: profile/pattern list population and current-selection sync (formerly set_items()/
+    // select_text() calls against ui.profiles/ui.patterns here) are now just TopBarBridge's
+    // Q_PROPERTY getters, computed live from settings whenever QML re-reads them after
+    // top_bar_bridge_.refresh() (see MainWindow::refresh_ui()) - nothing to push from here.
 
     for (auto *module : module_display.get_modules())
         module->setup(settings);
@@ -584,6 +557,25 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     nebula_background_widget_->setGeometry(ui_->centralwidget->rect());
     nebula_background_widget_->lower();
 
+    // Step 5: real top bar, replacing the old native profiles/patterns QGroupBox - added into
+    // topBarContainer's (empty, zero-margin) layout the same way every module embeds its QML,
+    // unlike nebula_background_widget_ above which deliberately isn't layout-managed.
+    top_bar_widget_ = new QQuickWidget(ui_->topBarContainer);
+    top_bar_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    // Without this, the layout has no way to know how tall to make an otherwise-empty container
+    // whose only content is a QQuickWidget using SizeRootObjectToView (its root's size depends on
+    // the view's size, which the layout can't determine without a hint from the root) - it
+    // collapsed topBarContainer to zero height. 76px covers both rows (2 * 26px content + 6px
+    // spacing + 8px top/bottom margins) - see TopBar.qml.
+    top_bar_widget_->setMinimumHeight(76);
+    top_bar_widget_->rootContext()->setContextProperty("topBar", &top_bar_bridge_);
+    top_bar_widget_->setSource(QUrl("qrc:/qml/TopBar.qml"));
+    ui_->topBarContainer->layout()->addWidget(top_bar_widget_);
+
+    top_bar_root_ = top_bar_widget_->rootObject();
+    if (top_bar_root_)
+        connect(top_bar_root_, SIGNAL(anyPopupOpenChanged()), this, SLOT(on_top_bar_popup_open_changed()));
+
     setAcceptDrops(true);
 
     // Setting data for widgets
@@ -591,13 +583,13 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
     set_data(*ui_->modeChooserComboBox, tr("Several mods"), OptimizationMode::SeveralMods);
 
     // Connecting widgets that do not depend on current profile
-    connect(ui_->manageProfiles, &QPushButton::pressed, this, [this] {
+    connect(&top_bar_bridge_, &TopBarBridge::manageProfilesRequested, this, [this] {
         ProfilesManagerWindow profiles_manager(settings_);
         profiles_manager.exec();
         refresh_ui();
     });
 
-    connect(ui_->managePatterns, &QPushButton::pressed, this, [this] {
+    connect(&top_bar_bridge_, &TopBarBridge::managePatternsRequested, this, [this] {
         save_settings();
         PatternsManagerWindow patterns_manager(settings_);
         patterns_manager.exec();
@@ -645,9 +637,8 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
         set_theme(theme);
     });
 
-    connect(ui_->profiles, &QComboBox::activated, this, [this](int idx) {
-        const QString &text = ui_->profiles->itemText(idx);
-        if (!settings_.set_current_profile(to_u8string(text)))
+    connect(&top_bar_bridge_, &TopBarBridge::profileSelected, this, [this](const QString &name) {
+        if (!settings_.set_current_profile(to_u8string(name)))
         {
             QMessageBox::critical(this, tr("Error"), tr("Could not set the current profile. Please restart the application"));
         }
@@ -656,9 +647,9 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
         refresh_ui();
     });
 
-    connect(ui_->patterns, &QComboBox::activated, this, [this]() {
+    connect(&top_bar_bridge_, &TopBarBridge::patternSelected, this, [this](const QString &pattern) {
         save_settings();
-        settings_.gui.selected_pattern = to_u8string(ui_->patterns->currentText());
+        settings_.gui.selected_pattern = to_u8string(pattern);
         refresh_ui();
     });
 
@@ -803,7 +794,7 @@ void MainWindow::refresh_ui()
 
 void MainWindow::save_settings() noexcept
 {
-    ui_to_settings(*ui_, module_display_, settings_);
+    ui_to_settings(*ui_, top_bar_bridge_, module_display_, settings_);
 
     if (!cao::save_settings(settings_))
     {
@@ -852,6 +843,12 @@ void MainWindow::about() noexcept
     const QString &file_name = e->mimeData()->urls().at(0).toLocalFile();
     if (std::filesystem::is_directory(file_name.toStdString()))
         ui_->inputDirTextEdit->setText(QDir::cleanPath(file_name));
+}
+
+void MainWindow::on_top_bar_popup_open_changed()
+{
+    const bool any_popup_open = top_bar_root_->property("anyPopupOpen").toBool();
+    top_bar_widget_->setFixedHeight(any_popup_open ? 300 : 76);
 }
 
 auto MainWindow::eventFilter(QObject *watched, QEvent *event) -> bool

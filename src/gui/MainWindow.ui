@@ -33,69 +33,23 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QGroupBox" name="groupBox">
-      <property name="title">
-       <string/>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_4">
-       <item row="1" column="1">
-        <widget class="QComboBox" name="profiles"/>
-       </item>
-       <item row="1" column="2">
-        <widget class="QPushButton" name="manageProfiles">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Manage</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_8">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="cursor">
-          <cursorShape>WhatsThisCursor</cursorShape>
-         </property>
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;See the wiki&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>Profile</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="patternsLabel">
-         <property name="cursor">
-          <cursorShape>WhatsThisCursor</cursorShape>
-         </property>
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;See the wiki&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>Pattern</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QComboBox" name="patterns"/>
-       </item>
-       <item row="2" column="2">
-        <widget class="QPushButton" name="managePatterns">
-         <property name="text">
-          <string>Manage</string>
-         </property>
-        </widget>
-       </item>
+     <widget class="QWidget" name="topBarContainer" native="true">
+      <!-- Step 5: real content is a QQuickWidget (TopBar.qml) added here in MainWindow's
+           constructor, replacing the old QGroupBox/QGridLayout of native profiles/patterns
+           QComboBoxes, manage QPushButtons, and QLabels - see MainWindow.cpp. -->
+      <layout class="QVBoxLayout" name="topBarLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
       </layout>
      </widget>
     </item>

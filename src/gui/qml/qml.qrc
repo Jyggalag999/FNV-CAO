@@ -18,5 +18,7 @@
         <file>CaoComboBox.qml</file>
         <file>ProfilesManagerWindow.qml</file>
         <file>CaoGroupBox.qml</file>
+        <file>CaoButton.qml</file>
+        <file>TopBar.qml</file>
     </qresource>
 </RCC>
