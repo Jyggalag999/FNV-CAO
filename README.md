@@ -1,6 +1,5 @@
 # Cathedral Assets Optimizer
 
-Cathedral Assets Optimizer is a tool aiming to automate asset conversion and optimization for several Bethesda games, such as Skyrim and Skyrim Special Edition.
 
 **This page is for the in-development, experimental version of the tool. Documentation is likely outdated.**
 
