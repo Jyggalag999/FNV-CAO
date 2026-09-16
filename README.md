@@ -18,11 +18,20 @@ This fork is released under Cathedral Assets Optimizer's original license, the [
 
 # Build instructions
 
-See [the wiki](https://gitlab.com/G_ka/sse-assets-optimiser/wikis/Build-instructions).
+Requires:
 
-# Features and use instructions
+- Visual Studio 2022 with the "Desktop development with C++" workload
+- [vcpkg](https://github.com/microsoft/vcpkg), cloned at `G:\CAOREPO\vcpkg`
+- This repo's sibling, the [bethutil](https://github.com/Jyggalag999/bethutil) FNV fork, cloned at `G:\CAOREPO\FNV_Fork\bethutil` — the local `bethutil` vcpkg overlay port ([cmake/ports/bethutil/portfile.cmake](cmake/ports/bethutil/portfile.cmake)) points at that exact path
 
-See [the NexusMods page](https://www.nexusmods.com/skyrimspecialedition/mods/23316).
+Then, from this repo:
+
+```powershell
+cmake -S . --preset vs2022-windows
+cmake --build build --config Release --target Cathedral_Assets_Optimizer
+```
+
+The built executable lands at `build\src\Release\Cathedral_Assets_Optimizer.exe`.
 
 # Credits
 
