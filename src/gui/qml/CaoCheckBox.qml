@@ -16,43 +16,66 @@ Item {
 
     property bool checked: false
     property string text: ""
+    property bool enabled: true
 
     signal toggled(bool checked)
 
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
 
+    activeFocusOnTab: root.enabled
+    opacity: root.enabled ? 1.0 : 0.6
+
+    Keys.onReturnPressed: if (root.enabled) root.toggled(!root.checked)
+    Keys.onSpacePressed: if (root.enabled) root.toggled(!root.checked)
+
     Row {
         id: row
-        spacing: 6
+        spacing: NebulaTheme.spacingS
 
         Rectangle {
-            width: 16
-            height: 16
-            radius: 2
+            width: NebulaTheme.indicatorSize
+            height: NebulaTheme.indicatorSize
+            radius: NebulaTheme.radiusS - 2
             anchors.verticalCenter: parent.verticalCenter
-            color: "#170c26"
-            border.color: "#4a2c6d"
+            color: NebulaTheme.bgInput
+            // Pink border (not the blue-purple every other control uses) paired with a blue
+            // checked-fill below - focus still wins out to cyan regardless, same as everywhere
+            // else, so keyboard focus never gets ambiguous with any other state/color scheme.
+            border.width: root.activeFocus ? 2 : 1
+            border.color: root.activeFocus
+                          ? NebulaTheme.borderColorFocus
+                          : (area.containsMouse ? NebulaTheme.borderColorAccentStrong : NebulaTheme.borderColorAccent)
+            Behavior on border.color { ColorAnimation { duration: NebulaTheme.durationNormal } }
 
             Rectangle {
-                visible: root.checked
                 anchors.centerIn: parent
                 width: 10
                 height: 10
                 radius: 1
-                color: "#d98fe0"
+                color: NebulaTheme.accentBlue
+                opacity: root.checked ? 1.0 : 0.0
+                scale: root.checked ? 1.0 : 0.6
+                Behavior on opacity { NumberAnimation { duration: NebulaTheme.durationFast } }
+                Behavior on scale { NumberAnimation { duration: NebulaTheme.durationFast; easing.type: Easing.OutBack } }
             }
         }
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            color: "#e6d8ef"
+            color: NebulaTheme.textPrimary
             text: root.text
         }
     }
 
     MouseArea {
+        id: area
         anchors.fill: parent
-        onClicked: root.toggled(!root.checked)
+        hoverEnabled: true
+        enabled: root.enabled
+        onClicked: {
+            root.forceActiveFocus();
+            root.toggled(!root.checked);
+        }
     }
 }

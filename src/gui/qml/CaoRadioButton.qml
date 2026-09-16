@@ -1,6 +1,7 @@
-// Shared hand-rolled radio button, matching CaoCheckBox's palette/conventions. Exclusivity
-// between sibling radio buttons is the consuming module's responsibility (bind each one's
-// `checked` off a shared bridge property) - this component stays dumb/stateless like CaoCheckBox.
+// Shared hand-rolled radio button, matching CaoCheckBox's palette/conventions/theme tokens.
+// Exclusivity between sibling radio buttons is the consuming module's responsibility (bind each
+// one's `checked` off a shared bridge property) - this component stays dumb/stateless like
+// CaoCheckBox.
 import QtQuick
 
 Item {
@@ -8,43 +9,63 @@ Item {
 
     property bool checked: false
     property string text: ""
+    property bool enabled: true
 
     signal clicked()
 
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
 
+    activeFocusOnTab: root.enabled
+    opacity: root.enabled ? 1.0 : 0.6
+
+    Keys.onReturnPressed: if (root.enabled) root.clicked()
+    Keys.onSpacePressed: if (root.enabled) root.clicked()
+
     Row {
         id: row
-        spacing: 6
+        spacing: NebulaTheme.spacingS
 
         Rectangle {
-            width: 16
-            height: 16
-            radius: 8
+            width: NebulaTheme.indicatorSize
+            height: NebulaTheme.indicatorSize
+            radius: width / 2
             anchors.verticalCenter: parent.verticalCenter
-            color: "#170c26"
-            border.color: "#4a2c6d"
+            color: NebulaTheme.bgInput
+            border.width: root.activeFocus ? 2 : 1
+            border.color: root.activeFocus
+                          ? NebulaTheme.borderColorFocus
+                          : (area.containsMouse ? NebulaTheme.borderColorStrong : NebulaTheme.borderColor)
+            Behavior on border.color { ColorAnimation { duration: NebulaTheme.durationNormal } }
 
             Rectangle {
-                visible: root.checked
                 anchors.centerIn: parent
                 width: 10
                 height: 10
                 radius: 5
-                color: "#d98fe0"
+                color: NebulaTheme.accentPrimary
+                opacity: root.checked ? 1.0 : 0.0
+                scale: root.checked ? 1.0 : 0.6
+                Behavior on opacity { NumberAnimation { duration: NebulaTheme.durationFast } }
+                Behavior on scale { NumberAnimation { duration: NebulaTheme.durationFast; easing.type: Easing.OutBack } }
             }
         }
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            color: "#e6d8ef"
+            color: NebulaTheme.textPrimary
             text: root.text
         }
     }
 
     MouseArea {
+        id: area
         anchors.fill: parent
-        onClicked: root.clicked()
+        hoverEnabled: true
+        enabled: root.enabled
+        onClicked: {
+            root.forceActiveFocus();
+            root.clicked();
+        }
     }
 }

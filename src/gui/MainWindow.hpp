@@ -67,11 +67,18 @@ private:
     TopBarBridge top_bar_bridge_;
 
     // Step 5: QML replacement for the old QPainter/eventFilter nebula background (see
-    // src/gui/qml/NebulaBackground.qml). Parented to centralwidget and kept lowered to the back
-    // of its stacking order (see the constructor) so the real layout-managed widgets - groupBox,
-    // inputDirTextEdit, mainGroupBox, tabWidget - paint on top of it, same as the old approach's
-    // gaps-only visibility. Geometry is kept in sync with centralwidget's size via eventFilter()
-    // reacting to QEvent::Resize, since it isn't itself layout-managed.
+    // src/gui/qml/NebulaBackground.qml). Parented to `this` (the QMainWindow), not centralwidget -
+    // menuBar and centralwidget are siblings under QMainWindow's own layout, not parent/child, so
+    // a background meant to show behind *both* (menuBar's "Options" reads as plain floating text
+    // now - see MainWindow.cpp's nebula_overrides QMenuBar rules - with nothing behind it unless
+    // this extends up into that row too) has to be parented above both of them, not inside just
+    // one. Kept lowered to the back of its stacking order (see the constructor) so the real
+    // layout-managed widgets - menuBar, groupBox, inputDirTextEdit, mainGroupBox, tabWidget - all
+    // paint on top of it. Geometry is the union of menuBar's and centralwidget's own geometry
+    // (both already in `this`'s coordinate space, being its direct children) - kept in sync via
+    // eventFilter() reacting to centralwidget's QEvent::Resize (see sync_nebula_background_geometry()
+    // - menuBar's height is stable, so watching centralwidget alone is enough to know when the
+    // union needs recomputing), since this widget isn't itself layout-managed.
     QQuickWidget *nebula_background_widget_ = nullptr;
 
     // Step 5: real top bar (see src/gui/qml/TopBar.qml). Parented directly to centralwidget and
@@ -103,8 +110,6 @@ private:
 
     void run_gui_selector();
 
-    void about() noexcept;
-
     // A QQuickWidget can't render content past its own bounds (unlike a native QComboBox's
     // popup, which is its own top-level window) - grows top_bar_widget_ while a dropdown is open
     // so it isn't clipped, then shrinks it back, instead of permanently reserving that space.
@@ -116,6 +121,13 @@ private:
     // while any popup needs room) - called from both eventFilter() and
     // on_top_bar_popup_open_changed(), since either can happen without the other.
     void sync_top_bar_widget_geometry();
+
+    // Repositions/resizes nebula_background_widget_ to cover menuBar *and* centralwidget - called
+    // from eventFilter() on centralwidget's QEvent::Resize (menuBar's own height is stable, so
+    // tracking centralwidget resize alone is enough to know when the union needs recomputing).
+    // See nebula_background_widget_'s own declaration for why it spans both instead of just
+    // centralwidget.
+    void sync_nebula_background_geometry();
 
     // Qt override
     [[maybe_unused]] void closeEvent(QCloseEvent *event) override;

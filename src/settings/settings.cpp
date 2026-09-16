@@ -72,13 +72,14 @@ auto Settings::get_profile(std::u8string_view profile_name) const noexcept -> st
 
 auto Settings::make_base() noexcept -> Settings
 {
+    // FNV-only fork: the picker (ProfilesManagerWindow::k_games) only ever offers FNV, so the
+    // fallback default settings shouldn't resurrect the other games' profiles either - otherwise
+    // a corrupted/unreadable settings.json would silently come back with a non-FNV profile
+    // selected. Per-game backend code (Settings::get(Game), Profile::make_base(Game), etc.) is
+    // untouched and still handles every game; only this UI-facing default is restricted.
     Settings settings;
     settings.profiles_ = {
         {u8"FNV", Profile::make_base(btu::Game::FNV)},
-        {u8"SSE", Profile::make_base(btu::Game::SSE)},
-        {u8"SLE", Profile::make_base(btu::Game::SLE)},
-        {u8"FO4NG", Profile::make_base(btu::Game::FO4)},
-        {u8"Starfield", Profile::make_base(btu::Game::Starfield)},
     };
     settings.current_profile_index_ = 0;
 

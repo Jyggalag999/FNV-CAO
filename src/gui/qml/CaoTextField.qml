@@ -6,6 +6,10 @@
 // which is what actually needs to happen once the *inner* TextInput's own binding to root.text
 // has been broken by the user's first keystroke (same fundamental issue CaoCheckBox has, just
 // unavoidable at the TextInput leaf instead of avoidable by not self-mutating at all).
+//
+// Background is NebulaTheme.bgInput, darker than the panels this normally sits in (CaoGroupBox's
+// content box, etc.) - inputs should read as a well sunk into the surrounding panel, not another
+// panel of their own; see the design spec's Text Inputs section.
 import QtQuick
 
 Item {
@@ -17,7 +21,7 @@ Item {
     signal textEdited(string text)
 
     implicitWidth: 220
-    implicitHeight: 24
+    implicitHeight: NebulaTheme.controlHeight
 
     onTextChanged: {
         if (input.text !== text)
@@ -26,17 +30,20 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 3
-        color: "#170c26"
-        border.color: input.activeFocus ? "#d98fe0" : "#4a2c6d"
+        radius: NebulaTheme.radiusS
+        color: NebulaTheme.bgInput
+        border.width: input.activeFocus ? 2 : 1
+        border.color: input.activeFocus ? NebulaTheme.borderColorFocus : NebulaTheme.borderColor
+        Behavior on border.color { ColorAnimation { duration: NebulaTheme.durationNormal } }
 
         TextInput {
             id: input
             anchors.fill: parent
             anchors.margins: 6
             verticalAlignment: TextInput.AlignVCenter
-            color: "#e6d8ef"
-            selectionColor: "#2d5aa5"
+            color: NebulaTheme.textPrimary
+            selectionColor: NebulaTheme.accentHighlight
+            selectedTextColor: NebulaTheme.bgDeep
             clip: true
             text: root.text
             onTextEdited: root.textEdited(text)
@@ -46,7 +53,7 @@ Item {
             visible: input.text.length === 0
             anchors.fill: input
             verticalAlignment: Text.AlignVCenter
-            color: "#6a5a76"
+            color: NebulaTheme.textDisabled
             text: root.placeholderText
         }
     }

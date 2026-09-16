@@ -4,19 +4,21 @@ import QtQuick
 
 Rectangle {
     anchors.fill: parent
-    color: "#0a0512"
+    color: NebulaTheme.bgDeep
+
+    NebulaDialogBackground {}
 
     Column {
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 8
+        anchors.margins: NebulaTheme.spacingM
+        spacing: NebulaTheme.spacingS
 
         Row {
-            spacing: 16
+            spacing: NebulaTheme.spacingL
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                color: "#e6d8ef"
+                color: NebulaTheme.textPrimary
                 text: "Log level:"
             }
 
@@ -43,43 +45,10 @@ Rectangle {
         }
 
         Row {
-            spacing: 8
+            spacing: NebulaTheme.spacingS
 
-            Rectangle {
-                width: 100
-                height: 28
-                color: clearArea.pressed ? "#280028" : "#3c1450"
-
-                Text {
-                    anchors.centerIn: parent
-                    color: "white"
-                    text: "Clear log"
-                }
-
-                MouseArea {
-                    id: clearArea
-                    anchors.fill: parent
-                    onClicked: logModel.clearLog()
-                }
-            }
-
-            Rectangle {
-                width: 120
-                height: 28
-                color: openArea.pressed ? "#280028" : "#3c1450"
-
-                Text {
-                    anchors.centerIn: parent
-                    color: "white"
-                    text: "Open log file"
-                }
-
-                MouseArea {
-                    id: openArea
-                    anchors.fill: parent
-                    onClicked: logModel.requestOpenLogFile()
-                }
-            }
+            CaoButton { width: 100; text: "Clear log"; onClicked: logModel.clearLog() }
+            CaoButton { width: 120; text: "Open log file"; onClicked: logModel.requestOpenLogFile() }
         }
 
         ListView {
@@ -104,23 +73,25 @@ Rectangle {
 
         Rectangle {
             width: parent.width
-            height: 24
-            radius: 3
-            color: "#170c26"
-            border.color: "#4a2c6d"
+            height: NebulaTheme.controlHeight
+            radius: NebulaTheme.radiusS
+            color: NebulaTheme.bgInput
+            border.width: 1
+            border.color: NebulaTheme.borderColor
 
             Rectangle {
                 width: logModel.progressMaximum > 0
                        ? parent.width * (logModel.progressValue / logModel.progressMaximum)
                        : 0
                 height: parent.height
-                radius: 3
-                color: "#642878"
+                radius: NebulaTheme.radiusS
+                color: NebulaTheme.accentPrimary
+                Behavior on width { NumberAnimation { duration: NebulaTheme.durationNormal } }
             }
 
             Text {
                 anchors.centerIn: parent
-                color: "white"
+                color: NebulaTheme.textPrimary
                 text: logModel.progressText
             }
         }

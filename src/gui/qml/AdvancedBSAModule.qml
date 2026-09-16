@@ -14,18 +14,18 @@ Item {
     // size its initial window height to fit instead of leaving dead space below.
     implicitHeight: contentBox.height
 
-    Rectangle {
+    // Unboxed - see GeneralBSAModule.qml for the full rationale (same module family).
+    Item {
         id: contentBox
         width: parent.width
-        height: column.implicitHeight + 24
-        color: "#170c26"
+        height: column.implicitHeight + NebulaTheme.spacingXL
 
         Column {
             id: column
-            x: 12
-            y: 12
-            width: parent.width - 24
-            spacing: 8
+            x: NebulaTheme.spacingM
+            y: NebulaTheme.spacingM
+            width: parent.width - NebulaTheme.spacingXL
+            spacing: NebulaTheme.spacingS
 
             CaoGroupBox {
                 width: parent.width

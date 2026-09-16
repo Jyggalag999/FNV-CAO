@@ -8,27 +8,29 @@
 
 namespace cao {
 
-/// @brief Thin QML-facing adapter for AdvancedAnimationsModule's single "Necessary optimization"
-/// checkbox. Deliberately just holds UI state - AdvancedAnimationsModule still owns reading it
-/// into Settings (ui_to_settings) and pushing Settings into it (settings_to_ui), same split of
-/// responsibility as SelectGpuBridge/TopBarBridge.
+/// @brief Thin QML-facing adapter for AdvancedAnimationsModule - a single "compress animations"
+/// toggle. Every other btu::kf::Settings field (ratio, compact16, blacklist, etc.) is hardcoded to
+/// the known-good/vanilla-matching values in AdvancedAnimationsModule::ui_to_settings, not exposed
+/// here at all - see that file for why. Deliberately just holds UI state - AdvancedAnimationsModule
+/// still owns reading it into Settings (ui_to_settings) and pushing Settings into it
+/// (settings_to_ui), same split of responsibility as every other module bridge.
 class AdvancedAnimationsBridge final : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(bool necessaryOpt READ necessaryOpt WRITE setNecessaryOpt NOTIFY necessaryOptChanged)
+    Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
 
 public:
     using QObject::QObject;
 
-    [[nodiscard]] auto necessaryOpt() const -> bool;
-    void setNecessaryOpt(bool value);
+    [[nodiscard]] auto enabled() const -> bool;
+    void setEnabled(bool value);
 
 signals:
-    void necessaryOptChanged();
+    void enabledChanged();
 
 private:
-    bool necessary_opt_ = false;
+    bool enabled_ = true;
 };
 
 } // namespace cao

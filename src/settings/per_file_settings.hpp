@@ -5,7 +5,7 @@
 #pragma once
 
 #include <btu/common/path.hpp>
-#include <btu/hkx/anim.hpp>
+#include <btu/kf/compress.hpp>
 #include <btu/nif/optimize.hpp>
 #include <btu/tex/optimize.hpp>
 
@@ -120,8 +120,11 @@ struct PerFileSettings
     OptimizeType nif_optimize = OptimizeType::Normal;
     btu::nif::Settings nif    = btu::nif::Settings::get(btu::Game::SSE);
 
-    OptimizeType hkx_optimize = OptimizeType::Normal;
-    btu::Game hkx_target      = btu::Game::SSE;
+    // Compresses .kf animation keyframes via btu::kf (native reimplementation of FNV's own
+    // vanilla B-spline animation compression). Replaces the old Havok/.hkx-only hkx_optimize -
+    // FNV doesn't use Havok animations at all, it uses NetImmerse .kf keyframes instead.
+    OptimizeType anim_optimize = OptimizeType::Normal;
+    btu::kf::Settings kf;
 
     Pattern pattern = k_default_pattern;
 
@@ -133,9 +136,8 @@ struct PerFileSettings
     [[nodiscard]] static auto make_base(btu::Game game) noexcept -> PerFileSettings
     {
         PerFileSettings settings{
-            .tex        = btu::tex::Settings::get(game),
-            .nif        = btu::nif::Settings::get(game),
-            .hkx_target = game,
+            .tex = btu::tex::Settings::get(game),
+            .nif = btu::nif::Settings::get(game),
         };
 
         settings.pattern = k_default_pattern;
@@ -145,6 +147,6 @@ struct PerFileSettings
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
-    PerFileSettings, pack, tex_optimize, tex, nif_optimize, nif, hkx_optimize, hkx_target, pattern)
+    PerFileSettings, pack, tex_optimize, tex, nif_optimize, nif, anim_optimize, kf, pattern)
 
 } // namespace cao

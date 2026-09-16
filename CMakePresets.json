@@ -61,6 +61,10 @@
         "VCPKG_INSTALL_OPTIONS": {
           "type": "STRING",
           "value": "--x-buildtrees-root=C:/vb"
+        },
+        "VCPKG_INSTALLED_DIR": {
+          "type": "PATH",
+          "value": "C:/vi"
         }
       },
       "hidden": true,
@@ -97,6 +101,7 @@
         "strategy": "set",
         "value": "x64"
       },
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_CXX_FLAGS": "/EHsc /MP /W4"
       },
@@ -110,6 +115,7 @@
       "toolset": "v143"
     },
     {
+      "binaryDir": "${sourceDir}/build-ninja",
       "cacheVariables": {
         "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /WX /external:anglebrackets /external:W0"
       },

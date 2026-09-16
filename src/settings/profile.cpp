@@ -36,6 +36,12 @@ namespace cao {
     auto fnv_sounds    = PerFileSettings::make_base(btu::Game::FNV);
     fnv_sounds.pattern = Pattern(u8"*.[ow][ga][gv]", Pattern::Type::Wildcard);
 
+    // btu::kf::Settings's own member defaults (ratio=0.80, compact16=false, etc.) already match
+    // kfcompress's documented defaults, so no field overrides needed here - just route .kf files
+    // through the pattern at all.
+    auto fnv_anims    = PerFileSettings::make_base(btu::Game::FNV);
+    fnv_anims.pattern = Pattern(u8"*.kf", Pattern::Type::Wildcard);
+
     profile.append_per_file_settings(fnv_lod_atlases);
     profile.append_per_file_settings(fnv_lod_textures);
     profile.append_per_file_settings(fnv_ui_textures);
@@ -43,6 +49,7 @@ namespace cao {
     profile.append_per_file_settings(fnv_tga);
     profile.append_per_file_settings(fnv_meshes);
     profile.append_per_file_settings(fnv_sounds);
+    profile.append_per_file_settings(fnv_anims);
 
     return profile;
 }

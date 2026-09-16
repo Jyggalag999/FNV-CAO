@@ -11,11 +11,12 @@ Item {
     property int value: 0
     property int from: 0
     property int to: 100
+    property bool enabled: true
 
     signal valueEdited(int value)
 
     implicitWidth: 90
-    implicitHeight: 24
+    implicitHeight: NebulaTheme.controlHeight
 
     function requestValue(v) {
         root.valueEdited(Math.max(from, Math.min(to, v)));
@@ -29,10 +30,12 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 3
-        color: "#170c26"
-        border.color: input.activeFocus ? "#d98fe0" : "#4a2c6d"
+        radius: NebulaTheme.radiusS
+        color: NebulaTheme.bgInput
+        border.width: input.activeFocus ? 2 : 1
+        border.color: input.activeFocus ? NebulaTheme.borderColorFocus : NebulaTheme.borderColor
         opacity: root.enabled ? 1.0 : 0.5
+        Behavior on border.color { ColorAnimation { duration: NebulaTheme.durationNormal } }
 
         TextInput {
             id: input
@@ -42,7 +45,9 @@ Item {
             anchors.bottom: parent.bottom
             anchors.margins: 6
             verticalAlignment: TextInput.AlignVCenter
-            color: "#e6d8ef"
+            color: NebulaTheme.textPrimary
+            selectionColor: NebulaTheme.accentHighlight
+            selectedTextColor: NebulaTheme.bgDeep
             text: root.value.toString()
             enabled: root.enabled
             validator: IntValidator { bottom: root.from; top: root.to }
@@ -59,17 +64,20 @@ Item {
             Rectangle {
                 width: 16
                 height: 11
-                color: "#3c1450"
+                color: upArea.containsMouse ? NebulaTheme.buttonTopHover : NebulaTheme.buttonTopNormal
+                Behavior on color { ColorAnimation { duration: NebulaTheme.durationFast } }
 
                 Text {
                     anchors.centerIn: parent
-                    color: "white"
+                    color: NebulaTheme.textPrimary
                     font.pixelSize: 9
                     text: "+"
                 }
 
                 MouseArea {
+                    id: upArea
                     anchors.fill: parent
+                    hoverEnabled: true
                     enabled: root.enabled
                     onClicked: root.requestValue(root.value + 1)
                 }
@@ -78,17 +86,20 @@ Item {
             Rectangle {
                 width: 16
                 height: 11
-                color: "#3c1450"
+                color: downArea.containsMouse ? NebulaTheme.buttonTopHover : NebulaTheme.buttonTopNormal
+                Behavior on color { ColorAnimation { duration: NebulaTheme.durationFast } }
 
                 Text {
                     anchors.centerIn: parent
-                    color: "white"
+                    color: NebulaTheme.textPrimary
                     font.pixelSize: 9
                     text: "-"
                 }
 
                 MouseArea {
+                    id: downArea
                     anchors.fill: parent
+                    hoverEnabled: true
                     enabled: root.enabled
                     onClicked: root.requestValue(root.value - 1)
                 }

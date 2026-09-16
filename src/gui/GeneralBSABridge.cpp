@@ -124,4 +124,46 @@ void GeneralBSABridge::setArchiveName(const QString &value)
     emit archiveNameChanged();
 }
 
+auto GeneralBSABridge::overrideMaxSize() const -> bool
+{
+    return override_max_size_;
+}
+
+void GeneralBSABridge::setOverrideMaxSize(bool value)
+{
+    if (override_max_size_ == value)
+        return;
+
+    override_max_size_ = value;
+    emit overrideMaxSizeChanged();
+}
+
+auto GeneralBSABridge::maxSizeMb() const -> int
+{
+    return max_size_mb_;
+}
+
+void GeneralBSABridge::setMaxSizeMb(int value)
+{
+    if (max_size_mb_ == value)
+        return;
+
+    max_size_mb_ = value;
+    emit maxSizeMbChanged();
+}
+
+auto GeneralBSABridge::defaultMaxSizeMb() const -> int
+{
+    return default_max_size_mb_;
+}
+
+void GeneralBSABridge::setDefaultMaxSizeMb(int value)
+{
+    if (default_max_size_mb_ == value)
+        return;
+
+    default_max_size_mb_ = value;
+    emit defaultMaxSizeMbChanged();
+}
+
 } // namespace cao

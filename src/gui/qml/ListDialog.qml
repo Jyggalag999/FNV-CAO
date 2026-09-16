@@ -5,15 +5,17 @@ import QtQuick
 
 Rectangle {
     anchors.fill: parent
-    color: "#0a0512"
+    color: NebulaTheme.bgDeep
+
+    NebulaDialogBackground {}
 
     Column {
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 8
+        anchors.margins: NebulaTheme.spacingM
+        spacing: NebulaTheme.spacingS
 
         Text {
-            color: "#e6d8ef"
+            color: NebulaTheme.textPrimary
             text: "Search"
         }
 
@@ -41,41 +43,17 @@ Rectangle {
             }
         }
 
-        Rectangle {
+        CaoButton {
             visible: listModel.addItemVisible
             width: 100
-            height: 28
-            color: addItemArea.pressed ? "#3c1450" : "#642878"
-
-            Text {
-                anchors.centerIn: parent
-                color: "white"
-                text: "Add item"
-            }
-
-            MouseArea {
-                id: addItemArea
-                anchors.fill: parent
-                onClicked: listModel.requestAddItem()
-            }
+            text: "Add item"
+            onClicked: listModel.requestAddItem()
         }
 
-        Rectangle {
+        CaoButton {
             width: 100
-            height: 28
-            color: closeArea.pressed ? "#3c1450" : "#642878"
-
-            Text {
-                anchors.centerIn: parent
-                color: "white"
-                text: "Close"
-            }
-
-            MouseArea {
-                id: closeArea
-                anchors.fill: parent
-                onClicked: dialog.accept()
-            }
+            text: "Close"
+            onClicked: dialog.accept()
         }
     }
 }

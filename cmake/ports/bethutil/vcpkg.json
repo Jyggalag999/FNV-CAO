@@ -1,6 +1,6 @@
 {
   "name": "bethutil",
-  "version-string": "1",
+  "version-string": "6",
   "dependencies": [
     {
       "name": "vcpkg-cmake",
@@ -20,7 +20,6 @@
     "utf8h",
     "rsm-bsa",
     "tl-expected",
-    "reproc",
     "bshoshany-thread-pool"
   ],
   "features": {

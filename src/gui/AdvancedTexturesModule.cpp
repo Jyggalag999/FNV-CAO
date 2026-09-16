@@ -24,9 +24,12 @@ AdvancedTexturesModule::AdvancedTexturesModule(QWidget *parent)
     qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
     qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
     // QML content is content-sized now, not full-page (see AdvancedTexturesModule.qml /
-    // GeneralBSAModule.cpp for the full rationale) - matches QTabWidget::pane's own background
-    // instead of defaulting to QQuickWidget's white clear color for the leftover space.
-    qml_widget_->setClearColor(QColor("#0d0818"));
+    // GeneralBSAModule.cpp for the full rationale). Was pinned to a hardcoded opaque match for
+    // QTabWidget::pane's background instead of real transparency - now that pane is translucent
+    // (nebula_overrides in MainWindow.cpp, so the nebula photo behind everything actually shows),
+    // this needs the same WA_AlwaysStackOnTop + transparent clear color fix as top_bar_widget_.
+    qml_widget_->setAttribute(Qt::WA_AlwaysStackOnTop);
+    qml_widget_->setClearColor(Qt::transparent);
     qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
     qml_widget_->setSource(QUrl("qrc:/qml/AdvancedTexturesModule.qml"));
     layout->addWidget(qml_widget_);
@@ -39,13 +42,17 @@ auto AdvancedTexturesModule::name() const noexcept -> QString
 
 void AdvancedTexturesModule::settings_to_ui(const Settings &settings)
 {
-    const auto &pfs = current_per_file_settings(settings);
+    const auto &profile = settings.current_profile();
 
-    // Main
-    bridge_.setMainChecked(pfs.tex_optimize != OptimizeType::None);
-    bridge_.setCompress(pfs.tex.compress);
-    bridge_.setMipmaps(pfs.tex.mipmaps);
-    bridge_.setForceCrunch(settings.current_profile().force_crunch_always);
+    // All global overrides now (Profile::force_*), independent of whichever pattern is selected -
+    // resize included, as of force_resize: it used to be the one exception here, silently read
+    // from whatever pattern the Pattern dropdown happened to have selected rather than being a
+    // real global setting.
+    bridge_.setMainChecked(profile.force_process_textures);
+    bridge_.setCompress(profile.force_compress_always);
+    bridge_.setCompressUncompressedOnly(profile.force_compress_uncompressed_only);
+    bridge_.setMipmaps(profile.force_mipmaps_always);
+    bridge_.setForceCrunch(profile.force_crunch_always);
 
     // Resizing
     bridge_.setResizingChecked(true);
@@ -65,27 +72,27 @@ void AdvancedTexturesModule::settings_to_ui(const Settings &settings)
                        bridge_.setHeight(static_cast<int>(dim.h));
                        bridge_.setMinimumChecked(false);
                    }},
-               pfs.tex.resize);
+               profile.force_resize);
 }
 
 void AdvancedTexturesModule::ui_to_settings(Settings &settings) const
 {
-    auto &pfs = current_per_file_settings(settings);
+    auto &profile = settings.current_profile();
 
-    // Main
-    pfs.tex_optimize                                = bridge_.mainChecked() ? OptimizeType::Normal
-                                                                              : OptimizeType::None;
-    pfs.tex.compress                                = bridge_.compress();
-    pfs.tex.mipmaps                                 = bridge_.mipmaps();
-    settings.current_profile().force_crunch_always  = bridge_.forceCrunch();
+    // Main - see settings_to_ui(): all global overrides, not tied to the selected pattern.
+    profile.force_process_textures           = bridge_.mainChecked();
+    profile.force_compress_always            = bridge_.compress();
+    profile.force_compress_uncompressed_only = bridge_.compressUncompressedOnly();
+    profile.force_mipmaps_always             = bridge_.mipmaps();
+    profile.force_crunch_always              = bridge_.forceCrunch();
 
     // Resizing
-    pfs.tex.resize = std::monostate{};
+    profile.force_resize = std::monostate{};
     if (bridge_.resizingChecked())
     {
         if (bridge_.resizeByRatio())
         {
-            pfs.tex.resize = btu::tex::util::ResizeRatio{
+            profile.force_resize = btu::tex::util::ResizeRatio{
                 .ratio = static_cast<uint8_t>(bridge_.width()),
                 .min   = bridge_.minimumChecked()
                              ? btu::tex::Dimension{static_cast<size_t>(bridge_.minimumWidth()),
@@ -94,8 +101,8 @@ void AdvancedTexturesModule::ui_to_settings(Settings &settings) const
         }
         else
         {
-            pfs.tex.resize = btu::tex::Dimension{.w = static_cast<size_t>(bridge_.width()),
-                                                 .h = static_cast<size_t>(bridge_.height())};
+            profile.force_resize = btu::tex::Dimension{.w = static_cast<size_t>(bridge_.width()),
+                                                       .h = static_cast<size_t>(bridge_.height())};
         }
     }
 }

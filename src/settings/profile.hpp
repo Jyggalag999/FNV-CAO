@@ -11,6 +11,9 @@
 #include <btu/common/path.hpp>
 #include <nlohmann/json.hpp>
 
+#include <optional>
+#include <variant>
+
 namespace cao {
 enum class BsaOperation : std::uint8_t
 {
@@ -28,7 +31,41 @@ public:
     bool bsa_allow_compression  = true;
     bool bsa_make_overrides     = false;
 
+    // User-typed base name for the output BSA(s)/ESP. When set, overrides the auto-detected
+    // plugin/folder name for every archive type, and only one dummy ESP gets created total.
+    std::optional<std::u8string> bsa_forced_name;
+
+    // Overrides btu::bsa::Settings::get(target_game)'s max_size (in bytes) when set. Lets the max
+    // size to pack a BSA up to be changed from the GUI/profile instead of needing a source edit +
+    // rebuild every time (see manager.cpp's get_bsa_settings()).
+    std::optional<uint64_t> bsa_max_size;
+
     bool dry_run = false;
+
+    // Global overrides for textures/animations/BSA-packing. The per-pattern list
+    // (per_file_settings_) still exists, but for the fields below it's no longer consulted at all
+    // (resize included, as of force_resize below): these flags and force_resize are the sole
+    // authority for whether/how textures, animations, and packing behave, regardless of which
+    // pattern a file matches or which pattern happens to be selected in the GUI. Replaces the
+    // older per-pattern tex_optimize/tex.compress/tex.mipmaps/tex.resize/anim_optimize/pack fields
+    // plus the old LOD-only force_lod_compress_crunch carve-out. Packing keeps bethutil's own
+    // structural gate (is_legal_path in pack.cpp: files at the archive root, non-regular files)
+    // untouched - this only replaces the user-configurable per-pattern "pack: bool" layer on top
+    // of that.
+    bool force_process_textures            = true;
+    bool force_compress_always             = false;
+    bool force_compress_uncompressed_only  = false; // only touch textures not already compressed
+    bool force_mipmaps_always              = true;
+    bool force_process_animations          = true;
+    bool force_pack_always                 = true;
+
+    bool force_crunch_always = false;
+
+    // Global override for resize: fully replaces whatever any per_file_settings_ pattern would
+    // have asked for, same as the flags above. std::monostate means "never resize" - resize only
+    // ever happens when this is explicitly set to a Dimension or ResizeRatio (i.e. the GUI's
+    // "Resizing" checkbox is on), never implicitly from a pattern match.
+    std::variant<std::monostate, btu::tex::util::ResizeRatio, btu::tex::Dimension> force_resize;
 
     uint32_t gpu_index{0};
 
@@ -126,7 +163,17 @@ public:
                                    bsa_make_dummy_plugins,
                                    bsa_allow_compression,
                                    bsa_make_overrides,
+                                   bsa_forced_name,
+                                   bsa_max_size,
                                    dry_run,
+                                   force_process_textures,
+                                   force_compress_always,
+                                   force_compress_uncompressed_only,
+                                   force_mipmaps_always,
+                                   force_process_animations,
+                                   force_pack_always,
+                                   force_crunch_always,
+                                   force_resize,
                                    gpu_index,
                                    optimization_mode,
                                    target_game,

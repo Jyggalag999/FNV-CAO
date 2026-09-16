@@ -23,90 +23,109 @@
 // combo box's dropdown list opening here would get clipped by the fixed minimum height above.
 // MainWindow.cpp watches this property and temporarily grows the widget while a dropdown is
 // open, then shrinks it back once both are closed, rather than permanently reserving that space.
+//
+// Root is a plain Item, not a Rectangle - it fills whatever size MainWindow.cpp resizes the
+// widget to (76px closed, 300px while a popup is open, see sync_top_bar_widget_geometry()), and
+// an Item has no background of its own, so anything below the real 76px header content stays
+// genuinely transparent. header below is the only opaque surface, fixed at 76px regardless of
+// the root's own height - that extra grown space exists purely so CaoComboBox's Popup
+// (parented to Overlay.overlay, which resolves against this same widget) has room to draw
+// itself; it was never meant to be backed by a second, bigger opaque rectangle of its own. See
+// MainWindow.cpp's WA_AlwaysStackOnTop/setClearColor(transparent) on top_bar_widget_ - both
+// halves of this fix are needed, since QQuickWidget paints an opaque clear color across its own
+// full rect regardless of what the QML content does unless told not to.
 import QtQuick
 
-Rectangle {
+Item {
     anchors.fill: parent
-    color: "#170c26"
 
     property bool anyPopupOpen: profileCombo.popupOpen || (patternRow.visible && patternCombo.popupOpen)
 
-    Column {
-        anchors.fill: parent
-        anchors.margins: 8
-        // Matches anchors.margins above, so the gap above "Pattern" (this spacing, between the
-        // two rows) is identical to the gap above "Profile" (the top margin) and below the last
-        // row (the bottom margin) - previously 6 vs 8, a visible unevenness.
-        spacing: 8
+    // Unboxed (plain Item, no fill) - was a translucent Rectangle, removed per feedback against
+    // stacked boxes everywhere; MainWindow's single shared nebula_background_widget_ (see
+    // NebulaBackground.qml) shows straight through with nothing here to block it.
+    Item {
+        id: header
+        width: parent.width
+        height: 76
 
-        Item {
-            width: parent.width
-            height: 26
+        Column {
+            anchors.fill: parent
+            anchors.margins: NebulaTheme.spacingS
+            // Matches anchors.margins above, so the gap above "Pattern" (this spacing, between the
+            // two rows) is identical to the gap above "Profile" (the top margin) and below the last
+            // row (the bottom margin) - previously 6 vs 8, a visible unevenness.
+            spacing: NebulaTheme.spacingS
 
-            Text {
-                id: profileLabel
-                width: 50
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                color: "#e6d8ef"
-                text: "Profile"
+            Item {
+                width: parent.width
+                height: NebulaTheme.controlHeight
+
+                Text {
+                    id: profileLabel
+                    width: 50
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: NebulaTheme.textPrimary
+                    text: "Profile"
+                }
+
+                CaoButton {
+                    id: manageProfilesButton
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: topBar.manageProfilesVisible
+                    text: "Manage"
+                    onClicked: topBar.manageProfiles()
+                }
+
+                CaoComboBox {
+                    id: profileCombo
+                    anchors.left: profileLabel.right
+                    anchors.leftMargin: NebulaTheme.spacingS
+                    anchors.right: manageProfilesButton.visible ? manageProfilesButton.left : parent.right
+                    anchors.rightMargin: manageProfilesButton.visible ? NebulaTheme.spacingS : 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    options: topBar.profileList
+                    currentIndex: topBar.profileList.indexOf(topBar.currentProfile)
+                    onActivated: (index) => topBar.selectProfile(topBar.profileList[index])
+                }
             }
 
-            CaoButton {
-                id: manageProfilesButton
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                visible: topBar.manageProfilesVisible
-                text: "Manage"
-                onClicked: topBar.manageProfiles()
-            }
+            Item {
+                id: patternRow
+                width: parent.width
+                height: NebulaTheme.controlHeight
+                visible: topBar.patternsVisible
 
-            CaoComboBox {
-                id: profileCombo
-                anchors.left: profileLabel.right
-                anchors.leftMargin: 8
-                anchors.right: manageProfilesButton.visible ? manageProfilesButton.left : parent.right
-                anchors.rightMargin: manageProfilesButton.visible ? 8 : 0
-                anchors.verticalCenter: parent.verticalCenter
-                options: topBar.profileList
-                currentIndex: topBar.profileList.indexOf(topBar.currentProfile)
-                onActivated: (index) => topBar.selectProfile(topBar.profileList[index])
-            }
-        }
+                Text {
+                    id: patternLabel
+                    width: 50
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: NebulaTheme.textPrimary
+                    text: "Pattern"
+                }
 
-        Item {
-            id: patternRow
-            width: parent.width
-            height: 26
-            visible: topBar.patternsVisible
+                CaoButton {
+                    id: managePatternsButton
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Manage"
+                    onClicked: topBar.managePatterns()
+                }
 
-            Text {
-                id: patternLabel
-                width: 50
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                color: "#e6d8ef"
-                text: "Pattern"
-            }
-
-            CaoButton {
-                id: managePatternsButton
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Manage"
-                onClicked: topBar.managePatterns()
-            }
-
-            CaoComboBox {
-                id: patternCombo
-                anchors.left: patternLabel.right
-                anchors.leftMargin: 8
-                anchors.right: managePatternsButton.left
-                anchors.rightMargin: 8
-                anchors.verticalCenter: parent.verticalCenter
-                options: topBar.patternList
-                currentIndex: topBar.patternList.indexOf(topBar.currentPattern)
-                onActivated: (index) => topBar.selectPattern(topBar.patternList[index])
+                CaoComboBox {
+                    id: patternCombo
+                    anchors.left: patternLabel.right
+                    anchors.leftMargin: NebulaTheme.spacingS
+                    anchors.right: managePatternsButton.left
+                    anchors.rightMargin: NebulaTheme.spacingS
+                    anchors.verticalCenter: parent.verticalCenter
+                    options: topBar.patternList
+                    currentIndex: topBar.patternList.indexOf(topBar.currentPattern)
+                    onActivated: (index) => topBar.selectPattern(topBar.patternList[index])
+                }
             }
         }
     }

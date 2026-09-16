@@ -36,6 +36,20 @@ void AdvancedTexturesBridge::setCompress(bool value)
     emit compressChanged();
 }
 
+auto AdvancedTexturesBridge::compressUncompressedOnly() const -> bool
+{
+    return compress_uncompressed_only_;
+}
+
+void AdvancedTexturesBridge::setCompressUncompressedOnly(bool value)
+{
+    if (compress_uncompressed_only_ == value)
+        return;
+
+    compress_uncompressed_only_ = value;
+    emit compressUncompressedOnlyChanged();
+}
+
 auto AdvancedTexturesBridge::mipmaps() const -> bool
 {
     return mipmaps_;

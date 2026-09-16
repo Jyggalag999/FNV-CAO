@@ -116,7 +116,11 @@ struct PluginInfo
 
 [[nodiscard]] auto get_bsa_settings(const Settings &sets) noexcept -> btu::bsa::Settings
 {
-    return btu::bsa::Settings::get(sets.current_profile().target_game);
+    auto bsa_sets         = btu::bsa::Settings::get(sets.current_profile().target_game);
+    bsa_sets.forced_name  = sets.current_profile().bsa_forced_name;
+    if (sets.current_profile().bsa_max_size)
+        bsa_sets.max_size = *sets.current_profile().bsa_max_size;
+    return bsa_sets;
 }
 
 void Manager::unpack_directory(const std::filesystem::path &directory_path) const
@@ -190,11 +194,15 @@ void Manager::pack_directory(const std::filesystem::path &directory_path) const
                                 .game_settings = bsa_sets,
                                 .compress      = compress,
                                 .allow_file_pred =
+                                    // force_pack_always is the sole on/off switch for packing - not
+                                    // tied to any pattern. bethutil's own is_legal_path (pack.cpp)
+                                    // still applies underneath this and is untouched: root-dir files
+                                    // and non-regular files are always excluded regardless.
                                     [profile](const auto &dir, const auto &file_info) {
-                                        const auto relative_path = file_info.path().lexically_relative(dir);
-                                        const auto pack = profile.get_per_file_settings(relative_path).pack;
+                                        const auto pack = profile.force_pack_always;
 
                                         if (!pack && std::filesystem::is_regular_file(file_info)) {
+                                            const auto relative_path = file_info.path().lexically_relative(dir);
                                             PLOGV << fmt::format("Skipping file {} from packing",
                                                                  relative_path.string());
                                         }

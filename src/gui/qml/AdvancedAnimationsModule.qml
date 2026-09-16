@@ -1,10 +1,13 @@
-// Step 4 module port. Full QML replacement for AdvancedAnimationsModule's internals - bound to
-// an AdvancedAnimationsBridge instance exposed as the "bridge" context property.
+// Full QML replacement for AdvancedAnimationsModule's internals - bound to an
+// AdvancedAnimationsBridge instance exposed as the "bridge" context property. A single toggle:
+// whether to compress .kf animations at all. Every other btu::kf::Settings field (ratio,
+// compact16, blacklist, etc.) is hardcoded in AdvancedAnimationsModule.cpp to the known-good/
+// vanilla-matching values, not exposed here - see that file for why.
 //
 // Root is a plain (transparent) Item filling the tab page, not the visible purple box itself -
 // see the Rectangle below, sized to its own content (matching CaoGroupBox.qml's technique)
-// rather than stretching to fill the tab page's full height, which left a large empty stretch of
-// solid color below the content. See GeneralBSAModule.qml for the full rationale.
+// rather than stretching to fill the tab page's full height. See GeneralBSAModule.qml for the
+// full rationale.
 import QtQuick
 
 Item {
@@ -14,27 +17,27 @@ Item {
     // can size its initial window height to fit instead of leaving dead space below.
     implicitHeight: contentBox.height
 
-    Rectangle {
+    // Unboxed - see GeneralBSAModule.qml for the full rationale (same module family).
+    Item {
         id: contentBox
         width: parent.width
-        height: column.implicitHeight + 24
-        color: "#170c26"
+        height: column.implicitHeight + NebulaTheme.spacingXL
 
         Column {
             id: column
-            x: 12
-            y: 12
-            width: parent.width - 24
-            spacing: 8
+            x: NebulaTheme.spacingM
+            y: NebulaTheme.spacingM
+            width: parent.width - NebulaTheme.spacingXL
+            spacing: NebulaTheme.spacingS
 
             CaoGroupBox {
                 width: parent.width
-                title: "Base"
+                title: "Animations"
 
                 CaoCheckBox {
-                    checked: bridge.necessaryOpt
-                    text: "Necessary optimization"
-                    onToggled: (checked) => bridge.necessaryOpt = checked
+                    checked: bridge.enabled
+                    text: "Compress animations"
+                    onToggled: (checked) => bridge.enabled = checked
                 }
             }
         }

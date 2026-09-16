@@ -6,18 +6,18 @@
 
 namespace cao {
 
-auto AdvancedAnimationsBridge::necessaryOpt() const -> bool
+auto AdvancedAnimationsBridge::enabled() const -> bool
 {
-    return necessary_opt_;
+    return enabled_;
 }
 
-void AdvancedAnimationsBridge::setNecessaryOpt(bool value)
+void AdvancedAnimationsBridge::setEnabled(bool value)
 {
-    if (necessary_opt_ == value)
+    if (enabled_ == value)
         return;
 
-    necessary_opt_ = value;
-    emit necessaryOptChanged();
+    enabled_ = value;
+    emit enabledChanged();
 }
 
 } // namespace cao

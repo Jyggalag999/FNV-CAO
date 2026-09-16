@@ -1,18 +1,24 @@
 // Step 4 module port. Full QML replacement for LevelSelector's internals - bound to a
 // LevelSelectorBridge instance exposed as the "bridge" context property.
+//
+// The three mode buttons stay a custom Rectangle rather than CaoButton - they need an
+// onEntered-triggered hover callback (bridge.hoverX(), used to preview helpText before a
+// selection is made) that CaoButton has no signal for, not just a differently-shaped button.
 import QtQuick
 
 Rectangle {
     anchors.fill: parent
-    color: "#0a0512"
+    color: NebulaTheme.bgDeep
+
+    NebulaDialogBackground {}
 
     Column {
         anchors.fill: parent
-        anchors.margins: 16
-        spacing: 16
+        anchors.margins: NebulaTheme.spacingL
+        spacing: NebulaTheme.spacingL
 
         Row {
-            spacing: 40
+            spacing: NebulaTheme.spacingXL
 
             Repeater {
                 model: [
@@ -24,11 +30,31 @@ Rectangle {
                 delegate: Rectangle {
                     width: 140
                     height: 32
-                    color: modeArea.pressed ? "#280028" : (modeArea.containsMouse ? "#50145a" : "#3c1450")
+                    radius: NebulaTheme.radiusS
+                    border.width: 1
+                    border.color: modeArea.containsMouse ? NebulaTheme.borderColorStrong : NebulaTheme.borderColor
+                    Behavior on border.color { ColorAnimation { duration: NebulaTheme.durationNormal } }
+
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0.0
+                            color: modeArea.pressed
+                                   ? NebulaTheme.buttonTopPressed
+                                   : (modeArea.containsMouse ? NebulaTheme.buttonTopHover : NebulaTheme.buttonTopNormal)
+                            Behavior on color { ColorAnimation { duration: NebulaTheme.durationFast } }
+                        }
+                        GradientStop {
+                            position: 1.0
+                            color: modeArea.pressed
+                                   ? NebulaTheme.buttonBottomPressed
+                                   : (modeArea.containsMouse ? NebulaTheme.buttonBottomHover : NebulaTheme.buttonBottomNormal)
+                            Behavior on color { ColorAnimation { duration: NebulaTheme.durationFast } }
+                        }
+                    }
 
                     Text {
                         anchors.centerIn: parent
-                        color: "white"
+                        color: NebulaTheme.textPrimary
                         text: modelData.text
                     }
 
@@ -46,7 +72,7 @@ Rectangle {
         Text {
             width: parent.width
             wrapMode: Text.WordWrap
-            color: "#e6d8ef"
+            color: NebulaTheme.textPrimary
             text: bridge.helpText
         }
 

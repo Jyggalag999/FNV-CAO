@@ -14,18 +14,18 @@ Item {
     // can size its initial window height to fit instead of leaving dead space below.
     implicitHeight: contentBox.height
 
-    Rectangle {
+    // Unboxed - see GeneralBSAModule.qml for the full rationale (same module family).
+    Item {
         id: contentBox
         width: parent.width
-        height: column.implicitHeight + 24
-        color: "#170c26"
+        height: column.implicitHeight + NebulaTheme.spacingXL
 
         Column {
             id: column
-            x: 12
-            y: 12
-            width: parent.width - 24
-            spacing: 16
+            x: NebulaTheme.spacingM
+            y: NebulaTheme.spacingM
+            width: parent.width - NebulaTheme.spacingXL
+            spacing: NebulaTheme.spacingL
 
             CaoGroupBox {
                 width: parent.width
@@ -36,12 +36,18 @@ Item {
 
                 Row {
                     visible: bridge.mainChecked
-                    spacing: 16
+                    spacing: NebulaTheme.spacingL
 
                     CaoCheckBox {
                         checked: bridge.compress
                         text: "Compress textures"
                         onToggled: (checked) => bridge.compress = checked
+                    }
+
+                    CaoCheckBox {
+                        checked: bridge.compressUncompressedOnly
+                        text: "Compress uncompressed only"
+                        onToggled: (checked) => bridge.compressUncompressedOnly = checked
                     }
 
                     CaoCheckBox {
@@ -67,10 +73,10 @@ Item {
 
                 Column {
                     visible: bridge.resizingChecked
-                    spacing: 8
+                    spacing: NebulaTheme.spacingS
 
                     Row {
-                        spacing: 24
+                        spacing: NebulaTheme.spacingXL
 
                         CaoRadioButton {
                             checked: bridge.resizeByRatio
@@ -86,11 +92,11 @@ Item {
                     }
 
                     Row {
-                        spacing: 16
+                        spacing: NebulaTheme.spacingL
 
                         Column {
                             spacing: 2
-                            Text { color: "#e6d8ef"; text: "Width" }
+                            Text { color: NebulaTheme.textPrimary; text: "Width" }
                             CaoSpinBox {
                                 from: 2
                                 to: 8192
@@ -101,7 +107,7 @@ Item {
 
                         Column {
                             spacing: 2
-                            Text { color: "#e6d8ef"; text: "Height" }
+                            Text { color: NebulaTheme.textPrimary; text: "Height" }
                             CaoSpinBox {
                                 from: 2
                                 to: 8192
@@ -112,7 +118,7 @@ Item {
                     }
 
                     Row {
-                        spacing: 8
+                        spacing: NebulaTheme.spacingS
                         visible: bridge.resizeByRatio
 
                         CaoCheckBox {

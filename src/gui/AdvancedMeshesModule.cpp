@@ -20,9 +20,12 @@ AdvancedMeshesModule::AdvancedMeshesModule(QWidget *parent)
     qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
     qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
     // QML content is content-sized now, not full-page (see AdvancedMeshesModule.qml /
-    // GeneralBSAModule.cpp for the full rationale) - matches QTabWidget::pane's own background
-    // instead of defaulting to QQuickWidget's white clear color for the leftover space.
-    qml_widget_->setClearColor(QColor("#0d0818"));
+    // GeneralBSAModule.cpp for the full rationale). Was pinned to a hardcoded opaque match for
+    // QTabWidget::pane's background instead of real transparency - now that pane is translucent
+    // (nebula_overrides in MainWindow.cpp, so the nebula photo behind everything actually shows),
+    // this needs the same WA_AlwaysStackOnTop + transparent clear color fix as top_bar_widget_.
+    qml_widget_->setAttribute(Qt::WA_AlwaysStackOnTop);
+    qml_widget_->setClearColor(Qt::transparent);
     qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
     qml_widget_->setSource(QUrl("qrc:/qml/AdvancedMeshesModule.qml"));
     layout->addWidget(qml_widget_);

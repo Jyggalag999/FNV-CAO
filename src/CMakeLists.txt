@@ -151,3 +151,16 @@ target_link_libraries(Cathedral_Assets_Optimizer PUBLIC CAO_LIB)
 # without this. qt6_import_qml_plugins() scans the target's compiled-in .qml/.qrc content and
 # links + Q_IMPORT_QML_PLUGIN's whatever static plugins it actually needs.
 qt6_import_qml_plugins(Cathedral_Assets_Optimizer)
+
+# qt6_import_qml_plugins() above only covers *QML* plugins (types reachable via "import Foo" in
+# .qml files) - it has no visibility into image *format* plugins, which QImageReader picks by
+# file content/extension at runtime, not QML imports. For a statically-linked Qt build those need
+# linking in explicitly or QImageReader silently can't decode that format at all: Image{} in QML
+# just reports Image.Error, with no build-time signal anything is missing (this is exactly what
+# happened to every qrc:/nebula/*.jpg reference added in this app - built and ran cleanly, never
+# rendered anything, because "jpeg" was never a requested qtbase vcpkg feature - see vcpkg.json -
+# so Qt6QJpegPlugin was never even built, let alone linked, until now). gif/ico/svg already worked
+# without an equivalent line here only because those particular plugins happen to come in via
+# Qt6::Gui/Qt6::Svg's own default static link interface for this vcpkg triplet; jpeg's plugin
+# doesn't, so it needs requesting explicitly.
+target_link_libraries(Cathedral_Assets_Optimizer PRIVATE Qt6::QJpegPlugin)

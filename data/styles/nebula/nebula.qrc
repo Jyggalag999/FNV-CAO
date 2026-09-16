@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/nebula">
+        <file>galaxy.jpg</file>
+        <file>galaxy2.jpg</file>
+    </qresource>
+</RCC>

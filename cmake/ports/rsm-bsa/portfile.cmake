@@ -11,17 +11,18 @@ vcpkg_from_github(
   HEAD_REF
   master)
 
+file(READ "${SOURCE_PATH}/src/bsa/fo4.cpp" FO4_CPP_CONTENT)
+string(REPLACE ".arraySize = isCubemap ? 6 : 1," ".arraySize = static_cast<std::size_t>(isCubemap ? 6 : 1)," FO4_CPP_CONTENT "${FO4_CPP_CONTENT}")
+file(WRITE "${SOURCE_PATH}/src/bsa/fo4.cpp" "${FO4_CPP_CONTENT}")
+
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS FEATURES xmem
                      BSA_SUPPORT_XMEM)
-
 vcpkg_cmake_configure(SOURCE_PATH "${SOURCE_PATH}" OPTIONS -DBUILD_TESTING=OFF
                       ${FEATURE_OPTIONS})
 vcpkg_cmake_install()
 vcpkg_cmake_config_fixup(PACKAGE_NAME bsa CONFIG_PATH "lib/cmake/bsa")
-
 file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/include
      ${CURRENT_PACKAGES_DIR}/debug/share)
-
 file(
   INSTALL "${SOURCE_PATH}/LICENSE"
   DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"

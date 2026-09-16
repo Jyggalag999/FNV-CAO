@@ -1,7 +1,10 @@
 <RCC>
     <qresource prefix="/qml">
+        <file>qmldir</file>
+        <file>NebulaTheme.qml</file>
         <file>SelectGpuDialog.qml</file>
         <file>NebulaBackground.qml</file>
+        <file>NebulaDialogBackground.qml</file>
         <file>CaoCheckBox.qml</file>
         <file>AdvancedAnimationsModule.qml</file>
         <file>AdvancedBSAModule.qml</file>

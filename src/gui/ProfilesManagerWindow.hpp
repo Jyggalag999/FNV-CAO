@@ -39,14 +39,19 @@ public:
     /// Display name <-> btu::Game, in combo-box order. Deliberately excludes "Fallout 3" - see
     /// ProfilesManagerBridge.hpp for why. Public so the free game_names() helper (translates this
     /// into the bridge's plain QStringList) can read it without befriending the class for it.
-    static constexpr std::array<std::pair<const char *, btu::Game>, 7> k_games{{
-        {"Morrowind", btu::Game::TES3},
-        {"Oblivion", btu::Game::TES4},
-        {"Skyrim LE (2011)", btu::Game::SLE},
-        {"Skyrim SE (2016)", btu::Game::SSE},
+    ///
+    /// Trimmed to FNV-only for this single-game workflow (per-game settings/logic elsewhere -
+    /// Settings::get(Game), Profile::make_base(Game), etc. - are untouched and still handle every
+    /// game below; only this UI-facing picker is restricted). To bring a game back, move its line
+    /// out of the comment and bump the std::array size to match the entry count.
+    static constexpr std::array<std::pair<const char *, btu::Game>, 1> k_games{{
+        // {"Morrowind", btu::Game::TES3},
+        // {"Oblivion", btu::Game::TES4},
+        // {"Skyrim LE (2011)", btu::Game::SLE},
+        // {"Skyrim SE (2016)", btu::Game::SSE},
         {"Fallout New Vegas", btu::Game::FNV},
-        {"Fallout 4 NG", btu::Game::FO4},
-        {"Starfield", btu::Game::Starfield},
+        // {"Fallout 4 NG", btu::Game::FO4},
+        // {"Starfield", btu::Game::Starfield},
     }};
 
 private:

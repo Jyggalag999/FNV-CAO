@@ -36,28 +36,34 @@ ComboBox {
     readonly property alias popupOpen: root.popup.visible
 
     implicitWidth: 200
-    implicitHeight: 24
+    implicitHeight: NebulaTheme.controlHeight
 
     background: Rectangle {
-        radius: 3
-        color: "#170c26"
-        border.color: root.hovered ? "#d98fe0" : "#4a2c6d"
+        radius: NebulaTheme.radiusS
+        color: NebulaTheme.bgInput
+        border.width: root.activeFocus ? 2 : 1
+        border.color: root.activeFocus
+                      ? NebulaTheme.borderColorFocus
+                      : (root.hovered ? NebulaTheme.borderColorStrong : NebulaTheme.borderColor)
+        Behavior on border.color { ColorAnimation { duration: NebulaTheme.durationNormal } }
     }
 
     contentItem: Text {
-        leftPadding: 6
-        rightPadding: root.indicator.width + 6
+        leftPadding: NebulaTheme.spacingS
+        rightPadding: root.indicator.width + NebulaTheme.spacingS
         verticalAlignment: Text.AlignVCenter
-        color: "#e6d8ef"
+        color: NebulaTheme.textPrimary
         elide: Text.ElideRight
         text: root.currentIndex >= 0 && root.currentIndex < root.count
               ? root.textAt(root.currentIndex) : root.placeholderText
     }
 
+    // Cyan, matching every other dropdown affordance in the app - see design spec's Dropdowns
+    // section ("Dropdown arrows should use the cyan highlight color").
     indicator: Text {
-        x: root.width - width - 6
+        x: root.width - width - NebulaTheme.spacingS
         y: (root.height - height) / 2
-        color: "#c4a8d4"
+        color: NebulaTheme.accentHighlight
         text: root.popup.visible ? "▲" : "▼"
     }
 
@@ -67,25 +73,29 @@ ComboBox {
         modal: false
         width: root.width
         // Deterministic content height - root.count (ComboBox's own, always-accurate item count)
-        // times the delegate's fixed 24px height, capped at 200px with scrolling beyond that.
+        // times the delegate's fixed height, capped at 200px with scrolling beyond that.
         // Previously bound to listView.contentHeight (a ListView/Flickable-computed property)
         // instead, which didn't reliably reflect the true delegate extent here - it read close to
         // or at the 200px cap regardless of actual item count, showing a fixed/oversized popup
         // with empty space below the last real item instead of sizing to content.
-        height: Math.min(root.count * 24, 200)
+        height: Math.min(root.count * 26, 200)
         padding: 0
         margins: 0
 
-        // Explicitly no animation on open/close: this popup only ever has exactly one
-        // background: Rectangle drawing its border (verified directly in this file), and its own
-        // steady-state rendering is a single tight border with nothing else around it - but
-        // QQuickPopup's C++ base can carry a default scale/fade transition regardless of what the
-        // Basic style's own QML sets (it sets none), and a screenshot taken mid-transition would
-        // show a larger, not-yet-settled frame overlapping the final size. Instant, deterministic
-        // show/hide removes that possibility outright, and matches this app's other hand-rolled
-        // controls, none of which animate either.
-        enter: Transition {}
-        exit: Transition {}
+        // Small slide+fade on open/close (150-250ms per the app's motion spec - see
+        // NebulaTheme.qml). "from: popup.y - 8" / "to: popup.y" both work off popup.y's *final*
+        // value, not a relative offset computed live - onAboutToShow above already set popup.y to
+        // its real open-state position before this transition ever starts (enter plays as the
+        // popup is shown, after onAboutToShow has run), so this always slides in from 8px above
+        // wherever the popup actually belongs, never from some stale previous position.
+        enter: Transition {
+            NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: NebulaTheme.durationSlow; easing.type: Easing.OutCubic }
+            NumberAnimation { property: "y"; from: popup.y - 8; to: popup.y; duration: NebulaTheme.durationSlow; easing.type: Easing.OutCubic }
+        }
+        exit: Transition {
+            NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: NebulaTheme.durationNormal; easing.type: Easing.InCubic }
+            NumberAnimation { property: "y"; from: popup.y; to: popup.y - 8; duration: NebulaTheme.durationNormal; easing.type: Easing.InCubic }
+        }
 
         // Positions in Overlay.overlay's coordinate space, computed at open time - the point of
         // parenting there (see this file's header comment) is that it's detached from root's own
@@ -100,12 +110,14 @@ ComboBox {
         // Explicitly anchored to the popup's own real bounds (matching Qt's own Popup
         // customization examples, which always do this) rather than left with no sizing/anchors
         // of its own - unanchored, it fell back to some other implicit size instead of reliably
-        // matching popup.width/height, so the visible 1px border (drawn by this Rectangle) didn't
+        // matching popup.width/height, so the visible border (drawn by this Rectangle) didn't
         // match the popup's actual paint/hit-test extent (width/height above).
         background: Rectangle {
             anchors.fill: parent
-            color: "#170c26"
-            border.color: "#4a2c6d"
+            radius: NebulaTheme.radiusS
+            color: NebulaTheme.withAlpha(NebulaTheme.bgElevated, NebulaTheme.panelAlphaElevated)
+            border.width: 1
+            border.color: NebulaTheme.borderColorStrong
         }
 
         // Same reasoning as background above - anchors.fill: parent (parent here being popup's
@@ -121,14 +133,16 @@ ComboBox {
 
             delegate: Rectangle {
                 width: listView.width
-                height: 24
-                color: optionArea.containsMouse ? "#3c1450" : "transparent"
+                height: 26
+                radius: NebulaTheme.radiusS
+                color: optionArea.containsMouse ? NebulaTheme.rowHover : "transparent"
+                Behavior on color { ColorAnimation { duration: NebulaTheme.durationFast } }
 
                 Text {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.leftMargin: 6
-                    color: "#e6d8ef"
+                    anchors.leftMargin: NebulaTheme.spacingS
+                    color: NebulaTheme.textPrimary
                     text: modelData
                 }
 

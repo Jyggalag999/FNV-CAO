@@ -29,6 +29,8 @@ class AdvancedTexturesBridge final : public QObject
 
     Q_PROPERTY(bool mainChecked READ mainChecked WRITE setMainChecked NOTIFY mainCheckedChanged)
     Q_PROPERTY(bool compress READ compress WRITE setCompress NOTIFY compressChanged)
+    Q_PROPERTY(bool compressUncompressedOnly READ compressUncompressedOnly WRITE
+                   setCompressUncompressedOnly NOTIFY compressUncompressedOnlyChanged)
     Q_PROPERTY(bool mipmaps READ mipmaps WRITE setMipmaps NOTIFY mipmapsChanged)
     Q_PROPERTY(bool forceCrunch READ forceCrunch WRITE setForceCrunch NOTIFY forceCrunchChanged)
 
@@ -52,6 +54,13 @@ public:
 
     [[nodiscard]] auto compress() const -> bool;
     void setCompress(bool value);
+
+    /// When on, compression only ever applies to textures that aren't already block-compressed -
+    /// anything already DXT/BC-encoded is left on its current format untouched. Stands on its own:
+    /// checking this is sufficient to compress whatever's uncompressed, whether or not compress()
+    /// is also checked - it doesn't require compress() to be on to do anything.
+    [[nodiscard]] auto compressUncompressedOnly() const -> bool;
+    void setCompressUncompressedOnly(bool value);
 
     [[nodiscard]] auto mipmaps() const -> bool;
     void setMipmaps(bool value);
@@ -85,6 +94,7 @@ public:
 signals:
     void mainCheckedChanged();
     void compressChanged();
+    void compressUncompressedOnlyChanged();
     void mipmapsChanged();
     void forceCrunchChanged();
     void resizingCheckedChanged();
@@ -96,11 +106,12 @@ signals:
     void minimumHeightChanged();
 
 private:
-    bool main_checked_     = false;
-    bool compress_         = false;
-    bool mipmaps_          = false;
-    bool force_crunch_     = false;
-    bool resizing_checked_ = false;
+    bool main_checked_                = false;
+    bool compress_                    = false;
+    bool compress_uncompressed_only_  = false;
+    bool mipmaps_                     = false;
+    bool force_crunch_                = false;
+    bool resizing_checked_            = false;
     bool resize_by_ratio_  = true;
     int width_             = 2;
     int height_            = 2;

@@ -9,31 +9,35 @@ import QtQuick
 
 Rectangle {
     anchors.fill: parent
-    color: "#0a0512"
+    color: NebulaTheme.bgDeep
+
+    NebulaDialogBackground {}
 
     Column {
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 8
+        anchors.margins: NebulaTheme.spacingM
+        spacing: NebulaTheme.spacingS
 
         ListView {
             id: patternsView
             width: parent.width
             height: parent.height - 44
             clip: true
-            spacing: 4
+            spacing: NebulaTheme.spacingXS
             model: patternsModel
 
             delegate: Rectangle {
                 width: patternsView.width
                 height: 32
-                color: "#170c26"
-                border.color: "#4a2c6d"
+                radius: NebulaTheme.radiusS
+                color: NebulaTheme.withAlpha(NebulaTheme.bgPanel, NebulaTheme.panelAlpha)
+                border.width: 1
+                border.color: NebulaTheme.borderColor
 
                 Row {
                     anchors.fill: parent
-                    anchors.margins: 4
-                    spacing: 6
+                    anchors.margins: NebulaTheme.spacingXS
+                    spacing: NebulaTheme.spacingS
 
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
@@ -42,17 +46,19 @@ Rectangle {
                         Rectangle {
                             width: 14
                             height: 10
-                            color: upArea.pressed ? "#280028" : "#3c1450"
-                            Text { anchors.centerIn: parent; color: "white"; font.pixelSize: 8; text: "▲" }
-                            MouseArea { id: upArea; anchors.fill: parent; onClicked: patternsModel.requestMoveUp(index) }
+                            color: upArea.containsMouse ? NebulaTheme.buttonTopHover : NebulaTheme.buttonTopNormal
+                            Behavior on color { ColorAnimation { duration: NebulaTheme.durationFast } }
+                            Text { anchors.centerIn: parent; color: NebulaTheme.textPrimary; font.pixelSize: 8; text: "▲" }
+                            MouseArea { id: upArea; anchors.fill: parent; hoverEnabled: true; onClicked: patternsModel.requestMoveUp(index) }
                         }
 
                         Rectangle {
                             width: 14
                             height: 10
-                            color: downArea.pressed ? "#280028" : "#3c1450"
-                            Text { anchors.centerIn: parent; color: "white"; font.pixelSize: 8; text: "▼" }
-                            MouseArea { id: downArea; anchors.fill: parent; onClicked: patternsModel.requestMoveDown(index) }
+                            color: downArea.containsMouse ? NebulaTheme.buttonTopHover : NebulaTheme.buttonTopNormal
+                            Behavior on color { ColorAnimation { duration: NebulaTheme.durationFast } }
+                            Text { anchors.centerIn: parent; color: NebulaTheme.textPrimary; font.pixelSize: 8; text: "▼" }
+                            MouseArea { id: downArea; anchors.fill: parent; hoverEnabled: true; onClicked: patternsModel.requestMoveDown(index) }
                         }
                     }
 
@@ -65,7 +71,7 @@ Rectangle {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: "#c4a8d4"
+                        color: NebulaTheme.textSecondary
                         text: model.isRegex ? "Regex" : "Glob"
                     }
 
@@ -73,17 +79,23 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 24
                         height: 24
-                        color: removeArea.pressed ? "#962d00" : "#3c1450"
+                        radius: NebulaTheme.radiusS
+                        // Secondary (pink) accent, not primary purple - the one destructive
+                        // action in this row, worth a visually distinct color from everything
+                        // else. Was a stray unrelated orange (#962d00) before.
+                        color: removeArea.containsMouse ? NebulaTheme.accentSecondary : NebulaTheme.buttonTopNormal
+                        Behavior on color { ColorAnimation { duration: NebulaTheme.durationFast } }
 
                         Text {
                             anchors.centerIn: parent
-                            color: "white"
+                            color: NebulaTheme.textPrimary
                             text: "×"
                         }
 
                         MouseArea {
                             id: removeArea
                             anchors.fill: parent
+                            hoverEnabled: true
                             onClicked: patternsModel.requestRemove(index)
                         }
                     }
@@ -91,22 +103,10 @@ Rectangle {
             }
         }
 
-        Rectangle {
+        CaoButton {
             width: 100
-            height: 28
-            color: newArea.pressed ? "#280028" : "#3c1450"
-
-            Text {
-                anchors.centerIn: parent
-                color: "white"
-                text: "New"
-            }
-
-            MouseArea {
-                id: newArea
-                anchors.fill: parent
-                onClicked: patternsModel.requestNew()
-            }
+            text: "New"
+            onClicked: patternsModel.requestNew()
         }
     }
 }

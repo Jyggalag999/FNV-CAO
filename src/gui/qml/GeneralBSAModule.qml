@@ -24,18 +24,22 @@ Item {
     // request to let "More" collapse independently of "Process BSAs".
     property bool moreChecked: true
 
-    Rectangle {
+    // Unboxed (plain Item, no fill/border) - was a translucent Rectangle, removed per feedback
+    // that the stacked boxes (this one, CaoGroupBox's own nested box inside it, QTabWidget::pane
+    // further out) made the UI read as "boxes on boxes" over the nebula rather than the nebula
+    // itself being the focus. MainWindow's single shared nebula_background_widget_ (see
+    // NebulaBackground.qml) already shows straight through a plain Item with nothing to block it.
+    Item {
         id: contentBox
         width: parent.width
-        height: column.implicitHeight + 24
-        color: "#170c26"
+        height: column.implicitHeight + NebulaTheme.spacingXL
 
         Column {
             id: column
-            x: 12
-            y: 12
-            width: parent.width - 24
-            spacing: 16
+            x: NebulaTheme.spacingM
+            y: NebulaTheme.spacingM
+            width: parent.width - NebulaTheme.spacingXL
+            spacing: NebulaTheme.spacingL
 
             CaoGroupBox {
                 width: parent.width
@@ -45,7 +49,7 @@ Item {
                 onToggled: (checked) => bridge.baseChecked = checked
 
                 Row {
-                    spacing: 24
+                    spacing: NebulaTheme.spacingXL
 
                     CaoRadioButton {
                         checked: bridge.extractMode
@@ -94,11 +98,11 @@ Item {
                 }
 
                 Row {
-                    spacing: 8
+                    spacing: NebulaTheme.spacingS
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        color: "#e6d8ef"
+                        color: NebulaTheme.textPrimary
                         text: "Archive name:"
                     }
 
@@ -108,6 +112,37 @@ Item {
                         placeholderText: "Leave blank for automatic naming"
                         onTextEdited: (text) => bridge.archiveName = text
                     }
+                }
+
+                Row {
+                    spacing: NebulaTheme.spacingS
+
+                    CaoCheckBox {
+                        anchors.verticalCenter: parent.verticalCenter
+                        checked: bridge.overrideMaxSize
+                        text: "Max size to pack BSAs to (MB):"
+                        onToggled: (checked) => bridge.overrideMaxSize = checked
+                    }
+
+                    CaoSpinBox {
+                        anchors.verticalCenter: parent.verticalCenter
+                        enabled: bridge.overrideMaxSize
+                        from: 1
+                        to: 8192
+                        value: bridge.maxSizeMb
+                        onValueEdited: (v) => bridge.maxSizeMb = v
+                    }
+                }
+
+                Text {
+                    color: NebulaTheme.textSecondary
+                    font.italic: true
+                    wrapMode: Text.WordWrap
+                    width: parent.width
+                    text: "Archives are split into multiple parts once they'd exceed this size " +
+                          "(game default: " + bridge.defaultMaxSizeMb + " MB). Most archive " +
+                          "formats get unreliable right around 4096 MB, so stay comfortably under " +
+                          "that."
                 }
             }
         }

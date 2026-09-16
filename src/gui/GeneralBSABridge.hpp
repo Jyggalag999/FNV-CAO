@@ -33,6 +33,11 @@ class GeneralBSABridge final : public QObject
     Q_PROPERTY(bool makeOverridesVisible READ makeOverridesVisible WRITE setMakeOverridesVisible
                    NOTIFY makeOverridesVisibleChanged)
     Q_PROPERTY(QString archiveName READ archiveName WRITE setArchiveName NOTIFY archiveNameChanged)
+    Q_PROPERTY(bool overrideMaxSize READ overrideMaxSize WRITE setOverrideMaxSize NOTIFY
+                   overrideMaxSizeChanged)
+    Q_PROPERTY(int maxSizeMb READ maxSizeMb WRITE setMaxSizeMb NOTIFY maxSizeMbChanged)
+    Q_PROPERTY(int defaultMaxSizeMb READ defaultMaxSizeMb WRITE setDefaultMaxSizeMb NOTIFY
+                   defaultMaxSizeMbChanged)
 
 public:
     using QObject::QObject;
@@ -61,6 +66,18 @@ public:
     [[nodiscard]] auto archiveName() const -> QString;
     void setArchiveName(const QString &value);
 
+    [[nodiscard]] auto overrideMaxSize() const -> bool;
+    void setOverrideMaxSize(bool value);
+
+    [[nodiscard]] auto maxSizeMb() const -> int;
+    void setMaxSizeMb(int value);
+
+    // Informational only (not persisted to Profile) - GeneralBSAModule.cpp fills this in with
+    // btu::bsa::Settings::get(target_game).max_size so the "(game default: N MB)" hint and the
+    // spin box's starting value reflect the actual current-game default, not a hardcoded guess.
+    [[nodiscard]] auto defaultMaxSizeMb() const -> int;
+    void setDefaultMaxSizeMb(int value);
+
 signals:
     void baseCheckedChanged();
     void extractModeChanged();
@@ -70,6 +87,9 @@ signals:
     void makeOverridesChanged();
     void makeOverridesVisibleChanged();
     void archiveNameChanged();
+    void overrideMaxSizeChanged();
+    void maxSizeMbChanged();
+    void defaultMaxSizeMbChanged();
 
 private:
     bool base_checked_           = false;
@@ -80,6 +100,9 @@ private:
     bool make_overrides_         = false;
     bool make_overrides_visible_ = true;
     QString archive_name_;
+    bool override_max_size_ = false;
+    int max_size_mb_        = 0;
+    int default_max_size_mb_ = 0;
 };
 
 } // namespace cao

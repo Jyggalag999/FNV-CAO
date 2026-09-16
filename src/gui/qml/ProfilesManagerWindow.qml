@@ -4,20 +4,22 @@ import QtQuick
 
 Rectangle {
     anchors.fill: parent
-    color: "#0a0512"
+    color: NebulaTheme.bgDeep
+
+    NebulaDialogBackground {}
 
     Column {
         anchors.fill: parent
-        anchors.margins: 16
-        spacing: 12
+        anchors.margins: NebulaTheme.spacingL
+        spacing: NebulaTheme.spacingM
 
         Row {
-            spacing: 8
+            spacing: NebulaTheme.spacingS
 
             Text {
                 width: 130
                 anchors.verticalCenter: parent.verticalCenter
-                color: "#e6d8ef"
+                color: NebulaTheme.textPrimary
                 text: "Profile"
             }
 
@@ -30,12 +32,12 @@ Rectangle {
         }
 
         Row {
-            spacing: 8
+            spacing: NebulaTheme.spacingS
 
             Text {
                 width: 130
                 anchors.verticalCenter: parent.verticalCenter
-                color: "#e6d8ef"
+                color: NebulaTheme.textPrimary
                 text: "Corresponding game"
             }
 
@@ -48,43 +50,17 @@ Rectangle {
         }
 
         Row {
-            spacing: 8
+            spacing: NebulaTheme.spacingS
 
-            Rectangle {
-                width: 130
-                height: 28
-                color: newArea.pressed ? "#280028" : "#3c1450"
-                Text { anchors.centerIn: parent; color: "white"; text: "New" }
-                MouseArea { id: newArea; anchors.fill: parent; onClicked: bridge.requestNewProfile() }
-            }
-
-            Rectangle {
-                width: 130
-                height: 28
-                color: removeArea.pressed ? "#280028" : "#3c1450"
-                Text { anchors.centerIn: parent; color: "white"; text: "Remove" }
-                MouseArea { id: removeArea; anchors.fill: parent; onClicked: bridge.requestRemoveProfile() }
-            }
+            CaoButton { width: 130; text: "New"; onClicked: bridge.requestNewProfile() }
+            CaoButton { width: 130; text: "Remove"; onClicked: bridge.requestRemoveProfile() }
         }
 
         Row {
-            spacing: 8
+            spacing: NebulaTheme.spacingS
 
-            Rectangle {
-                width: 130
-                height: 28
-                color: importArea.pressed ? "#280028" : "#3c1450"
-                Text { anchors.centerIn: parent; color: "white"; text: "Import" }
-                MouseArea { id: importArea; anchors.fill: parent; onClicked: bridge.requestImportProfile() }
-            }
-
-            Rectangle {
-                width: 130
-                height: 28
-                color: exportArea.pressed ? "#280028" : "#3c1450"
-                Text { anchors.centerIn: parent; color: "white"; text: "Export" }
-                MouseArea { id: exportArea; anchors.fill: parent; onClicked: bridge.requestExportProfile() }
-            }
+            CaoButton { width: 130; text: "Import"; onClicked: bridge.requestImportProfile() }
+            CaoButton { width: 130; text: "Export"; onClicked: bridge.requestExportProfile() }
         }
     }
 }

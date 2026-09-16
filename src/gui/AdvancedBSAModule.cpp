@@ -20,9 +20,12 @@ AdvancedBSAModule::AdvancedBSAModule(QWidget *parent)
     qml_widget_ = new QQuickWidget(this); // NOLINT(cppcoreguidelines-owning-memory)
     qml_widget_->setResizeMode(QQuickWidget::SizeRootObjectToView);
     // QML content is content-sized now, not full-page (see AdvancedBSAModule.qml /
-    // GeneralBSAModule.cpp for the full rationale) - matches QTabWidget::pane's own background
-    // instead of defaulting to QQuickWidget's white clear color for the leftover space.
-    qml_widget_->setClearColor(QColor("#0d0818"));
+    // GeneralBSAModule.cpp for the full rationale). Was pinned to a hardcoded opaque match for
+    // QTabWidget::pane's background instead of real transparency - now that pane is translucent
+    // (nebula_overrides in MainWindow.cpp, so the nebula photo behind everything actually shows),
+    // this needs the same WA_AlwaysStackOnTop + transparent clear color fix as top_bar_widget_.
+    qml_widget_->setAttribute(Qt::WA_AlwaysStackOnTop);
+    qml_widget_->setClearColor(Qt::transparent);
     qml_widget_->rootContext()->setContextProperty("bridge", &bridge_);
     qml_widget_->setSource(QUrl("qrc:/qml/AdvancedBSAModule.qml"));
     layout->addWidget(qml_widget_);
@@ -30,30 +33,21 @@ AdvancedBSAModule::AdvancedBSAModule(QWidget *parent)
 
 void AdvancedBSAModule::settings_to_ui(const Settings &settings)
 {
-    auto &pfs = current_per_file_settings(settings);
-    bridge_.setPackFile(pfs.pack);
+    // Global override now (Profile::force_pack_always), not tied to the selected pattern - see
+    // AdvancedTexturesModule for the same treatment of textures.
+    bridge_.setPackFile(settings.current_profile().force_pack_always);
 }
 
 void AdvancedBSAModule::ui_to_settings(Settings &settings) const
 {
-    auto &pfs = current_per_file_settings(settings);
-    pfs.pack  = bridge_.packFile();
+    settings.current_profile().force_pack_always = bridge_.packFile();
 }
 
 auto AdvancedBSAModule::is_supported_game(btu::Game game) const noexcept -> bool
 {
-    switch (game)
-    {
-        case btu::Game::TES3:
-        case btu::Game::TES4:
-        case btu::Game::SLE:
-        case btu::Game::SSE:
-        case btu::Game::FNV:
-        case btu::Game::FO4:
-        case btu::Game::Starfield: return true;
-        case btu::Game::Custom: return false;
-    }
-    return false;
+    // FNV-only fork: the profile picker (ProfilesManagerWindow::k_games) never offers a
+    // non-FNV game anyway, so this is purely defensive - see settings.cpp's make_base() comment.
+    return game == btu::Game::FNV;
 }
 
 auto AdvancedBSAModule::name() const noexcept -> QString
