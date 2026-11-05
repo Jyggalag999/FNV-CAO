@@ -17,7 +17,8 @@ namespace cao {
 // PROJECT_SUMMARY.md) was reconstructing FNV's actual vanilla animation compression, verified
 // against 553 real vanilla-compressed files and a real 14,313-file mod batch; letting these drift
 // away from what was actually verified just reintroduces the risk that reconstruction eliminated.
-// The only user-facing control is whether animations get compressed at all (bridge_.enabled()).
+// The user-facing controls are whether animations get compressed at all (bridge_.enabled()) and
+// whether the lossless repeated-key removal pre-pass runs (bridge_.dedupe(), on by default).
 namespace {
 constexpr double k_vanilla_matching_ratio = 0.80; // see PROJECT_SUMMARY.md: exact spike at 0.800
                                                   // in 40% of 553 real vanilla-compressed files
@@ -26,6 +27,7 @@ constexpr bool k_compact16              = true;  // pack control points as 16-bi
 constexpr bool k_use_tolerance          = false; // ratio-based fit, not adaptive-tolerance search
 constexpr int k_control_points_auto     = 0;     // 0 = auto (ratio-driven), never a fixed override
 constexpr int k_max_control_points      = 400;   // kfcompress's own default search cap
+constexpr int k_min_control_points      = 48;    // kfcompress's own default floor for short clips
 constexpr int k_skip                    = 1;     // keep every source keyframe, no decimation
 constexpr bool k_force_convert_all      = false; // skip bones where conversion wouldn't shrink
                                                   // them, matching observed vanilla behavior
@@ -57,7 +59,14 @@ void AdvancedAnimationsModule::settings_to_ui(const Settings &settings)
 {
     // Global override now (Profile::force_process_animations), not tied to the selected pattern -
     // see AdvancedTexturesModule for the same treatment of textures.
-    bridge_.setEnabled(settings.current_profile().force_process_animations);
+    const auto &profile = settings.current_profile();
+    bridge_.setEnabled(profile.force_process_animations);
+
+    // Dedupe is stored per pattern like the rest of kf::Settings, but ui_to_settings keeps every
+    // row in sync, so any one row represents the toggle; show the first.
+    const auto rows = profile.per_file_settings();
+    if (!rows.empty())
+        bridge_.setDedupe(rows.front()->kf.dedupe);
 }
 
 void AdvancedAnimationsModule::ui_to_settings(Settings &settings) const
@@ -78,6 +87,8 @@ void AdvancedAnimationsModule::ui_to_settings(Settings &settings) const
         kf.compact16          = k_compact16;
         kf.control_points     = k_control_points_auto;
         kf.max_control_points = k_max_control_points;
+        kf.min_control_points = k_min_control_points;
+        kf.dedupe              = bridge_.dedupe();
         kf.skip                = k_skip;
         kf.force_convert_all   = k_force_convert_all;
         kf.no_blacklist         = k_no_blacklist;

@@ -1,5 +1,5 @@
-# cache-bust: bump this when SOURCE_PATH content changes, since vcpkg can't hash a local overlay path (bump 9: btu::kf bspline solve adds a second-derivative roughness penalty to fix Runge's-phenomenon control-point swings on short/sparse clips, ported from kfcompress-beta-workspace)
-set(SOURCE_PATH "G:/CAOREPO/FNV_Fork/bethutil")
+# cache-bust: bump this when SOURCE_PATH content changes, since vcpkg can't hash a local overlay path (bump 10: shared kfcompress v1.5 core (dedupe, fit-against-original-keys, min control points), no temp files; earlier bump 9: btu::kf bspline solve adds a second-derivative roughness penalty to fix Runge's-phenomenon control-point swings on short/sparse clips, ported from kfcompress-beta-workspace)
+set(SOURCE_PATH "P:/CAOREPO/FNV_Fork/bethutil")
 
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 

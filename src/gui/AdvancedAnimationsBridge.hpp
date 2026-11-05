@@ -8,8 +8,8 @@
 
 namespace cao {
 
-/// @brief Thin QML-facing adapter for AdvancedAnimationsModule - a single "compress animations"
-/// toggle. Every other btu::kf::Settings field (ratio, compact16, blacklist, etc.) is hardcoded to
+/// @brief Thin QML-facing adapter for AdvancedAnimationsModule - a "compress animations" toggle
+/// and a "remove redundant keys" (dedupe) toggle. Every other btu::kf::Settings field (ratio, compact16, blacklist, etc.) is hardcoded to
 /// the known-good/vanilla-matching values in AdvancedAnimationsModule::ui_to_settings, not exposed
 /// here at all - see that file for why. Deliberately just holds UI state - AdvancedAnimationsModule
 /// still owns reading it into Settings (ui_to_settings) and pushing Settings into it
@@ -19,6 +19,7 @@ class AdvancedAnimationsBridge final : public QObject
     Q_OBJECT
 
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
+    Q_PROPERTY(bool dedupe READ dedupe WRITE setDedupe NOTIFY dedupeChanged)
 
 public:
     using QObject::QObject;
@@ -26,11 +27,16 @@ public:
     [[nodiscard]] auto enabled() const -> bool;
     void setEnabled(bool value);
 
+    [[nodiscard]] auto dedupe() const -> bool;
+    void setDedupe(bool value);
+
 signals:
     void enabledChanged();
+    void dedupeChanged();
 
 private:
     bool enabled_ = true;
+    bool dedupe_  = true;
 };
 
 } // namespace cao

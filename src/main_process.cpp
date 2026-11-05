@@ -279,8 +279,13 @@ void log_file_no_work_required(const std::filesystem::path &path) noexcept
         return tl::make_unexpected(btu::common::Error(k_error_no_work_required));
     }
 
-    return file.content->and_then(
-        [&](std::vector<std::byte> content) { return btu::kf::compress(content, kf_settings); });
+    return file.content->and_then([&](std::vector<std::byte> content) {
+        std::string diagnostics;
+        auto res = btu::kf::compress(content, kf_settings, &diagnostics);
+        if (!res)
+            PLOGE << std::format("{}: kf compression failed: {}", file.relative_path.string(), diagnostics);
+        return res;
+    });
 }
 
 auto process_file(btu::modmanager::ModFile &&file, const Settings &settings) noexcept

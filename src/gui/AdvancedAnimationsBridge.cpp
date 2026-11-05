@@ -20,4 +20,18 @@ void AdvancedAnimationsBridge::setEnabled(bool value)
     emit enabledChanged();
 }
 
+auto AdvancedAnimationsBridge::dedupe() const -> bool
+{
+    return dedupe_;
+}
+
+void AdvancedAnimationsBridge::setDedupe(bool value)
+{
+    if (dedupe_ == value)
+        return;
+
+    dedupe_ = value;
+    emit dedupeChanged();
+}
+
 } // namespace cao

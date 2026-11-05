@@ -1,6 +1,6 @@
 // Full QML replacement for AdvancedAnimationsModule's internals - bound to an
 // AdvancedAnimationsBridge instance exposed as the "bridge" context property. A single toggle:
-// whether to compress .kf animations at all. Every other btu::kf::Settings field (ratio,
+// whether to compress .kf animations at all, plus whether to run the lossless dedupe pre-pass. Every other btu::kf::Settings field (ratio,
 // compact16, blacklist, etc.) is hardcoded in AdvancedAnimationsModule.cpp to the known-good/
 // vanilla-matching values, not exposed here - see that file for why.
 //
@@ -38,6 +38,13 @@ Item {
                     checked: bridge.enabled
                     text: "Compress animations"
                     onToggled: (checked) => bridge.enabled = checked
+                }
+
+                CaoCheckBox {
+                    checked: bridge.dedupe
+                    text: "Remove redundant repeated keys (lossless)"
+                    enabled: bridge.enabled
+                    onToggled: (checked) => bridge.dedupe = checked
                 }
             }
         }

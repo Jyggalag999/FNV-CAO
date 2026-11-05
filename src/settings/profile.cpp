@@ -36,7 +36,7 @@ namespace cao {
     auto fnv_sounds    = PerFileSettings::make_base(btu::Game::FNV);
     fnv_sounds.pattern = Pattern(u8"*.[ow][ga][gv]", Pattern::Type::Wildcard);
 
-    // btu::kf::Settings's own member defaults (ratio=0.80, compact16=false, etc.) already match
+    // btu::kf::Settings's own member defaults (ratio=0.80, compact16=true, dedupe=true, etc.) already match
     // kfcompress's documented defaults, so no field overrides needed here - just route .kf files
     // through the pattern at all.
     auto fnv_anims    = PerFileSettings::make_base(btu::Game::FNV);
