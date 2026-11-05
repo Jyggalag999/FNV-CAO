@@ -8,7 +8,7 @@
 This is a fork of Cathedral Assets Optimizer for **Fallout New Vegas only**.
 
 - Uses CRNLib for texture compression.
-- Includes a custom Animation Compressor for `.kf` files.
+- Includes a custom Animation Compressor for `.kf` files (GPL-2.0-only, see below).
 - Lets you fill BSAs to a configurable size limit.
 - CRNLib now checks whether a texture's alpha channel is actually used, rather than only checking whether the channel exists.
 - Custom UI.
@@ -46,3 +46,7 @@ Some tools listed here might be no longer used in the project, but I still want 
 - [Deorder](https://github.com/deorder/), for his assistance and [Libbsarch](https://github.com/deorder/libbsarch)
 - [Francesc M.](francescmm), for [QLogger](https://github.com/francescmm/QLogger)
 - [Feles Noctis](https://ko-fi.com/felesnoctis), [Hishy](https://www.nexusmods.com/skyrimspecialedition/users/3259968), [Alsa](https://github.com/alsa64), -[Aerisarn](https://github.com/aerisarn), and many others, for tests and advice
+
+## License
+
+This fork's files keep their original Mozilla Public License 2.0 headers ([LICENSE](LICENSE)). The `.kf` compressor in bethutil is GPL-2.0-only ([COPYING-GPL-2.0.txt](COPYING-GPL-2.0.txt)). MPL-2.0 allows its files to be combined into a GPL-2.0 work, so built binaries of this fork that include the compressor are distributed under GPL-2.0.
