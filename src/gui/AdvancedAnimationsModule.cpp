@@ -26,7 +26,7 @@ constexpr bool k_compact16              = true;  // pack control points as 16-bi
                                                   // matching NiBSplineCompTransformInterpolator
 constexpr bool k_use_tolerance          = false; // ratio-based fit, not adaptive-tolerance search
 constexpr int k_control_points_auto     = 0;     // 0 = auto (ratio-driven), never a fixed override
-constexpr int k_max_control_points      = 400;   // kfcompress's own default search cap
+constexpr int k_max_control_points      = 0;     // no cap, kfcompress's default (long clips need >400)
 constexpr int k_min_control_points      = 48;    // kfcompress's own default floor for short clips
 constexpr int k_skip                    = 1;     // keep every source keyframe, no decimation
 constexpr bool k_force_convert_all      = false; // skip bones where conversion wouldn't shrink

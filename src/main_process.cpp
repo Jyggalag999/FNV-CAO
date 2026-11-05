@@ -279,11 +279,35 @@ void log_file_no_work_required(const std::filesystem::path &path) noexcept
         return tl::make_unexpected(btu::common::Error(k_error_no_work_required));
     }
 
-    return file.content->and_then([&](std::vector<std::byte> content) {
+    return file.content->and_then([&](std::vector<std::byte> content) -> tl::expected<std::vector<std::byte>, btu::common::Error> {
         std::string diagnostics;
-        auto res = btu::kf::compress(content, kf_settings, &diagnostics);
+        bool modified = true;
+        auto res      = btu::kf::compress(content, kf_settings, &diagnostics, &modified);
         if (!res)
+        {
             PLOGE << std::format("{}: kf compression failed: {}", file.relative_path.string(), diagnostics);
+            return res;
+        }
+
+        // Success-path diagnostics were dropped before: the core reports things like trailing bytes
+        // or "hit --max-control-points" here, which are worth seeing. Warnings go to PLOGW, the
+        // routine per-file log to PLOGD.
+        if (!diagnostics.empty())
+        {
+            const bool is_warning = diagnostics.find("arning") != std::string::npos
+                                    || diagnostics.find("railing") != std::string::npos
+                                    || diagnostics.find("max-control-points") != std::string::npos;
+            if (is_warning)
+                PLOGW << std::format("{}: {}", file.relative_path.string(), diagnostics);
+            else
+                PLOGD << std::format("{}: {}", file.relative_path.string(), diagnostics);
+        }
+
+        // Nothing to convert (already B-spline, no eligible channels, ...): the core hands back a copy of
+        // the input. Report "no work" like the nif/texture paths so the file isn't rewritten with
+        // identical content (new mtime, extra I/O, a pointless MO2 overwrite entry).
+        if (!modified)
+            return tl::make_unexpected(btu::common::Error(k_error_no_work_required));
         return res;
     });
 }
