@@ -47,6 +47,59 @@ Item {
                     onToggled: (checked) => bridge.dedupe = checked
                 }
             }
+
+            // Error budget: every converted bone is verified against these at its keys and between
+            // them; a bone that cannot meet them stays uncompressed. 0 disables a limit.
+            CaoGroupBox {
+                width: parent.width
+                title: "Error limits (per bone)"
+
+                Row {
+                    spacing: NebulaTheme.spacingS
+                    Text {
+                        width: 190
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: NebulaTheme.textPrimary
+                        text: "Rotation (degrees)"
+                    }
+                    CaoTextField {
+                        width: 90
+                        text: bridge.maxRotDeg.toString()
+                        enabled: bridge.enabled
+                        onTextEdited: (t) => { const v = parseFloat(t); if (!isNaN(v) && v >= 0) bridge.maxRotDeg = v }
+                    }
+                }
+                Row {
+                    spacing: NebulaTheme.spacingS
+                    Text {
+                        width: 190
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: NebulaTheme.textPrimary
+                        text: "Translation (game units)"
+                    }
+                    CaoTextField {
+                        width: 90
+                        text: bridge.maxTrans.toString()
+                        enabled: bridge.enabled
+                        onTextEdited: (t) => { const v = parseFloat(t); if (!isNaN(v) && v >= 0) bridge.maxTrans = v }
+                    }
+                }
+                Row {
+                    spacing: NebulaTheme.spacingS
+                    Text {
+                        width: 190
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: NebulaTheme.textPrimary
+                        text: "Scale"
+                    }
+                    CaoTextField {
+                        width: 90
+                        text: bridge.maxScale.toString()
+                        enabled: bridge.enabled
+                        onTextEdited: (t) => { const v = parseFloat(t); if (!isNaN(v) && v >= 0) bridge.maxScale = v }
+                    }
+                }
+            }
         }
     }
 }

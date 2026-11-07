@@ -18,7 +18,9 @@ namespace cao {
 // against 553 real vanilla-compressed files and a real 14,313-file mod batch; letting these drift
 // away from what was actually verified just reintroduces the risk that reconstruction eliminated.
 // The user-facing controls are whether animations get compressed at all (bridge_.enabled()) and
-// whether the lossless repeated-key removal pre-pass runs (bridge_.dedupe(), on by default).
+// whether the lossless repeated-key removal pre-pass runs (bridge_.dedupe(), on by default), and
+// the error budget (max rotation degrees / translation units / scale) every converted bone must meet.
+// The ratio stays at 0.80 only as the starting guess of the per-bone control-point search.
 namespace {
 constexpr double k_vanilla_matching_ratio = 0.80; // see PROJECT_SUMMARY.md: exact spike at 0.800
                                                   // in 40% of 553 real vanilla-compressed files
@@ -66,7 +68,12 @@ void AdvancedAnimationsModule::settings_to_ui(const Settings &settings)
     // row in sync, so any one row represents the toggle; show the first.
     const auto rows = profile.per_file_settings();
     if (!rows.empty())
+    {
         bridge_.setDedupe(rows.front()->kf.dedupe);
+        bridge_.setMaxRotDeg(rows.front()->kf.max_rot_deg);
+        bridge_.setMaxTrans(rows.front()->kf.max_trans);
+        bridge_.setMaxScale(rows.front()->kf.max_scale);
+    }
 }
 
 void AdvancedAnimationsModule::ui_to_settings(Settings &settings) const
@@ -89,6 +96,9 @@ void AdvancedAnimationsModule::ui_to_settings(Settings &settings) const
         kf.max_control_points = k_max_control_points;
         kf.min_control_points = k_min_control_points;
         kf.dedupe              = bridge_.dedupe();
+        kf.max_rot_deg         = bridge_.maxRotDeg();
+        kf.max_trans           = bridge_.maxTrans();
+        kf.max_scale           = bridge_.maxScale();
         kf.skip                = k_skip;
         kf.force_convert_all   = k_force_convert_all;
         kf.no_blacklist         = k_no_blacklist;

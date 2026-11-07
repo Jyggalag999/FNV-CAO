@@ -34,4 +34,46 @@ void AdvancedAnimationsBridge::setDedupe(bool value)
     emit dedupeChanged();
 }
 
+auto AdvancedAnimationsBridge::maxRotDeg() const -> double
+{
+    return max_rot_deg_;
+}
+
+void AdvancedAnimationsBridge::setMaxRotDeg(double value)
+{
+    if (max_rot_deg_ == value)
+        return;
+
+    max_rot_deg_ = value;
+    emit maxRotDegChanged();
+}
+
+auto AdvancedAnimationsBridge::maxTrans() const -> double
+{
+    return max_trans_;
+}
+
+void AdvancedAnimationsBridge::setMaxTrans(double value)
+{
+    if (max_trans_ == value)
+        return;
+
+    max_trans_ = value;
+    emit maxTransChanged();
+}
+
+auto AdvancedAnimationsBridge::maxScale() const -> double
+{
+    return max_scale_;
+}
+
+void AdvancedAnimationsBridge::setMaxScale(double value)
+{
+    if (max_scale_ == value)
+        return;
+
+    max_scale_ = value;
+    emit maxScaleChanged();
+}
+
 } // namespace cao
