@@ -16,10 +16,14 @@
 #include <btu/tex/texture.hpp>
 #include <btu/tex/crunch_texture.hpp>
 #include <btu/tex/crunch_functions.hpp>
+#include <btu/tex/functions.hpp>
 #include <fmt/format.h>
 #include <plog/Log.h>
 #include <tl/expected.hpp>
 
+#include <cstring>
+#include <span>
+#include <string>
 #include <string_view>
 #include <flux.hpp>
 #include <flux/core/ref.hpp>
@@ -83,7 +87,8 @@ auto guess_file_type(const std::filesystem::path &path) noexcept -> std::optiona
 
 [[nodiscard]] auto steps_are_empty(const btu::tex::OptimizationSteps &steps) noexcept -> bool
 {
-    return !steps.convert && !steps.mipmaps && !steps.add_transparent_alpha && !steps.resize;
+    return !steps.convert && !steps.mipmaps && !steps.add_transparent_alpha && !steps.resize
+           && !steps.bc3_to_bc1;
 }
 
 [[nodiscard]] auto human_readable_step_string(const btu::nif::OptimizationSteps &steps) noexcept -> std::string
@@ -108,6 +113,8 @@ auto guess_file_type(const std::filesystem::path &path) noexcept -> std::optiona
 
     if (steps.convert)
         strs.emplace_back(fmt::format("convert to {}", steps.best_format));
+    if (steps.bc3_to_bc1)
+        strs.emplace_back("opaque DXT5 -> DXT1");
     if (steps.mipmaps)
         strs.emplace_back("generate mipmaps");
     if (steps.add_transparent_alpha)
@@ -221,12 +228,50 @@ void log_file_no_work_required(const std::filesystem::path &path) noexcept
            && btu::tex::crunch_supports_format(fmt.compressed_without_alpha);
 }
 
+/// True when the DDS header says BC3/DXT5 (legacy "DXT5" FourCC or a DX10 header with a BC3 format).
+/// A cheap peek so only DXT5 files pay for the extra DirectXTex load below.
+[[nodiscard]] auto dds_header_is_bc3(std::span<const std::byte> data) noexcept -> bool
+{
+    constexpr size_t k_fourcc_offset = 84;  // "DDS " magic + offset of ddspf.dwFourCC in DDS_HEADER
+    constexpr size_t k_dx10_offset   = 128; // DDS_HEADER_DXT10 follows the 124-byte header
+    if (data.size() < k_dx10_offset)
+        return false;
+    const auto at = [&](size_t i) { return static_cast<char>(data[i]); };
+    if (at(0) != 'D' || at(1) != 'D' || at(2) != 'S' || at(3) != ' ')
+        return false;
+    const auto fourcc = std::string{at(k_fourcc_offset), at(k_fourcc_offset + 1), at(k_fourcc_offset + 2),
+                                    at(k_fourcc_offset + 3)};
+    if (fourcc == "DXT5")
+        return true;
+    if (fourcc != "DX10" || data.size() < k_dx10_offset + 4)
+        return false;
+    uint32_t dxgi = 0;
+    std::memcpy(&dxgi, data.data() + k_dx10_offset, sizeof(dxgi));
+    return btu::tex::bc1_counterpart(static_cast<DXGI_FORMAT>(dxgi)) != DXGI_FORMAT_UNKNOWN;
+}
+
+/// With the crunch encoder selected, an opaque DXT5 whose only change is DXT5 -> DXT1 still goes
+/// through the DirectXTex path: that step is a lossless block copy, which beats a crunch re-encode.
+[[nodiscard]] auto is_lossless_bc3_to_bc1_only(const btu::modmanager::ModFile &file,
+                                               const btu::tex::Settings &settings) noexcept -> bool
+{
+    auto &content = *file.content;
+    if (!content || !dds_header_is_bc3(*content))
+        return false;
+    auto tex = btu::tex::load(file.relative_path, *content);
+    if (!tex)
+        return false;
+    const auto steps = btu::tex::compute_optimization_steps(*tex, settings);
+    return steps.bc3_to_bc1 && !steps.convert && !steps.resize && !steps.mipmaps
+           && !steps.add_transparent_alpha;
+}
+
 [[nodiscard]] auto process_texture(btu::modmanager::ModFile &&file,
                                    const btu::tex::Settings &settings,
                                    const OptimizeType type) noexcept
     -> tl::expected<std::vector<std::byte>, btu::common::Error>
 {
-    if (settings.force_crunch && can_use_crunch(settings))
+    if (settings.force_crunch && can_use_crunch(settings) && !is_lossless_bc3_to_bc1_only(file, settings))
         return process_texture_crunch(BTU_FWD(file), settings, type);
 
     static auto compression_device = btu::tex::CompressionDevice();
