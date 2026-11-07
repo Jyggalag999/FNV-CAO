@@ -7,7 +7,7 @@
   error for compressed animations (defaults 0.25 / 0.05 / 0.001). Older profiles load with
   these defaults.
 - **Remove redundant repeated keys (lossless)** checkbox on the Animations page (on by default).
-- The window title and welcome message show the fork version.
+- The welcome message shows the fork version.
 
 ### Changed
 - Uses the kfcompress 1.6 core, so CAO and the kfcompress CLI produce the same output.
