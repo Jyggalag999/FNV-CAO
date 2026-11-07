@@ -24,7 +24,9 @@
 void init()
 {
     QCoreApplication::setApplicationName("Cathedral Assets Optimizer");
-    QCoreApplication::setApplicationVersion(k_cao_version);
+    QCoreApplication::setApplicationVersion(
+        QStringLiteral("%1 (FNV fork %2)")
+            .arg(QString::fromUtf8(k_cao_version), QString::fromUtf8(k_cao_fnv_version)));
 }
 
 void init_translations()

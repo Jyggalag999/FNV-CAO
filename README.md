@@ -7,21 +7,30 @@
 
 This is a fork of Cathedral Assets Optimizer for **Fallout New Vegas only**.
 
+**Fork version:** 1.1.0 — see [CHANGELOG.md](CHANGELOG.md) for what's new.
+
 - Uses CRNLib for texture compression.
-- Includes a custom Animation Compressor for `.kf` files (GPL-2.0-only, see below).
+- Includes a custom Animation Compressor for `.kf` files (GPL-2.0-only, see below), the same core as [kfcompress](https://github.com/Jyggalag999/FNV-AnimCompressor).
 - Lets you fill BSAs to a configurable size limit.
 - CRNLib now checks whether a texture's alpha channel is actually used, rather than only checking whether the channel exists.
 - Custom UI.
 
-This fork is released under Cathedral Assets Optimizer's original license, the [Mozilla Public License 2.0](LICENSE). The Animation Compressor included in this fork is also released by its author under the same license.
+## Animations page
+
+- **Compress animations**: converts `.kf` keyframes to compressed B-splines.
+- **Remove redundant repeated keys (lossless)**: on by default.
+- **Error limits (per bone)**: the maximum rotation (degrees), translation (game units) and scale error a compressed bone may have, checked at every key and between keys. Defaults 0.25 / 0.05 / 0.001. A bone that can't stay within them is left uncompressed. Lower them for stricter output, raise them for smaller files.
+- Files the compressor doesn't change are left untouched.
+
+This fork is released under Cathedral Assets Optimizer's original license, the [Mozilla Public License 2.0](LICENSE). The Animation Compressor is GPL-2.0-only; see [License](#license) below.
 
 # Build instructions
 
 Requires:
 
 - Visual Studio 2022 with the "Desktop development with C++" workload
-- [vcpkg](https://github.com/microsoft/vcpkg), cloned at `G:\CAOREPO\vcpkg`
-- This repo's sibling, the [bethutil](https://github.com/Jyggalag999/bethutil) FNV fork, cloned at `G:\CAOREPO\FNV_Fork\bethutil` — the local `bethutil` vcpkg overlay port ([cmake/ports/bethutil/portfile.cmake](cmake/ports/bethutil/portfile.cmake)) points at that exact path
+- [vcpkg](https://github.com/microsoft/vcpkg), cloned at `P:\CAOREPO\vcpkg`
+- This repo's sibling, the [bethutil](https://github.com/Jyggalag999/bethutil) FNV fork, cloned at `P:\CAOREPO\FNV_Fork\bethutil` — the local `bethutil` vcpkg overlay port ([cmake/ports/bethutil/portfile.cmake](cmake/ports/bethutil/portfile.cmake)) points at that exact path
 
 Then, from this repo:
 
