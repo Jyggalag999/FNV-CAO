@@ -1,6 +1,7 @@
 // Step 4 module port. Full QML replacement for ProgressWindow's internals - bound to a
 // ProgressLogModel instance exposed as the "logModel" context property.
 import QtQuick
+import QtQuick.Controls
 
 Rectangle {
     anchors.fill: parent
@@ -8,10 +9,17 @@ Rectangle {
 
     NebulaDialogBackground {}
 
-    Column {
+    // Header rows at the top, progress bar pinned to the bottom, log fills what's between (was a
+    // Column with the log at a hardcoded parent.height - 148, which left a gap under the bar at
+    // 100% and would overlap/clip at other scales).
+    Item {
         anchors.fill: parent
         anchors.margins: NebulaTheme.spacingM
-        spacing: NebulaTheme.spacingS
+
+        Column {
+            id: header
+            width: parent.width
+            spacing: NebulaTheme.spacingS
 
         Row {
             spacing: NebulaTheme.spacingL
@@ -50,17 +58,22 @@ Rectangle {
             CaoButton { width: 100; text: "Clear log"; onClicked: logModel.clearLog() }
             CaoButton { width: 120; text: "Open log file"; onClicked: logModel.requestOpenLogFile() }
         }
+        }
 
         ListView {
             id: logView
+            anchors.top: header.bottom
+            anchors.topMargin: NebulaTheme.spacingS
+            anchors.bottom: progressBar.top
+            anchors.bottomMargin: NebulaTheme.spacingS
             width: parent.width
-            height: parent.height - 148
             clip: true
+            ScrollBar.vertical: ScrollBar { policy: size < 1.0 ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
             spacing: 1
             model: logModel
 
             delegate: Text {
-                width: logView.width
+                width: logView.width - NebulaTheme.spacingM // room for the scrollbar
                 wrapMode: Text.WordWrap
                 visible: !model.hidden
                 height: visible ? implicitHeight : 0
@@ -68,10 +81,14 @@ Rectangle {
                 text: model.text
             }
 
-            onCountChanged: positionViewAtEnd()
+            // Deferred: wrapped delegates only get their final height after layout, so jumping to
+            // the end immediately left the last line half below the bottom edge.
+            onCountChanged: Qt.callLater(positionViewAtEnd)
         }
 
         Rectangle {
+            id: progressBar
+            anchors.bottom: parent.bottom
             width: parent.width
             height: NebulaTheme.controlHeight
             radius: NebulaTheme.radiusS
@@ -91,6 +108,9 @@ Rectangle {
 
             Text {
                 anchors.centerIn: parent
+                width: Math.min(implicitWidth, parent.width - NebulaTheme.spacingM)
+                elide: Text.ElideMiddle // long file paths would spill past the bar
+                horizontalAlignment: Text.AlignHCenter
                 color: NebulaTheme.textPrimary
                 text: logModel.progressText
             }

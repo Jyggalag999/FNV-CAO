@@ -6,6 +6,7 @@
 // rather than stretching to fill the tab page's full height, which left a large empty stretch of
 // solid color below the content. See GeneralBSAModule.qml for the full rationale.
 import QtQuick
+import QtQuick.Controls
 
 Item {
     anchors.fill: parent
@@ -15,6 +16,16 @@ Item {
     implicitHeight: contentBox.height
 
     // Unboxed - see GeneralBSAModule.qml for the full rationale (same module family).
+    // Scrolls when the content is taller than the tab (instead of being clipped).
+    Flickable {
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: contentBox.height
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.VerticalFlick
+        ScrollBar.vertical: ScrollBar { policy: size < 1.0 ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff } // visible whenever content overflows (AsNeeded hides it until scrolled)
+
     Item {
         id: contentBox
         width: parent.width
@@ -34,32 +45,52 @@ Item {
                 checked: bridge.mainChecked
                 onToggled: (checked) => bridge.mainChecked = checked
 
-                Row {
+                Column {
+                    width: parent.width
                     visible: bridge.mainChecked
-                    spacing: NebulaTheme.spacingL
+                    spacing: NebulaTheme.spacingS
 
-                    CaoCheckBox {
-                        checked: bridge.compress
-                        text: "Compress textures"
-                        onToggled: (checked) => bridge.compress = checked
+                    Flow {
+                        width: parent.width
+                        spacing: NebulaTheme.spacingL
+
+                        CaoCheckBox {
+                            checked: bridge.compress
+                            text: "Compress textures"
+                            onToggled: (checked) => bridge.compress = checked
+                        }
+
+                        CaoCheckBox {
+                            checked: bridge.compressUncompressedOnly
+                            text: "Compress uncompressed only"
+                            onToggled: (checked) => bridge.compressUncompressedOnly = checked
+                        }
+
+                        CaoCheckBox {
+                            checked: bridge.forceCrunch
+                            text: "Use crunch encoder"
+                            onToggled: (checked) => bridge.forceCrunch = checked
+                        }
+
+                        CaoCheckBox {
+                            checked: bridge.mipmaps
+                            text: "Generate mipmaps"
+                            onToggled: (checked) => bridge.mipmaps = checked
+                        }
                     }
 
                     CaoCheckBox {
-                        checked: bridge.compressUncompressedOnly
-                        text: "Compress uncompressed only"
-                        onToggled: (checked) => bridge.compressUncompressedOnly = checked
+                        checked: bridge.bc3ToBc1a
+                        text: "Store binary-alpha diffuse DXT5 as DXT1 (1-bit alpha)"
+                        onToggled: (checked) => bridge.bc3ToBc1a = checked
                     }
 
-                    CaoCheckBox {
-                        checked: bridge.forceCrunch
-                        text: "Use crunch encoder"
-                        onToggled: (checked) => bridge.forceCrunch = checked
-                    }
-
-                    CaoCheckBox {
-                        checked: bridge.mipmaps
-                        text: "Generate mipmaps"
-                        onToggled: (checked) => bridge.mipmaps = checked
+                    Text {
+                        color: NebulaTheme.textPrimary
+                        opacity: 0.7
+                        width: parent.width
+                        wrapMode: Text.WordWrap
+                        text: "Only diffuse textures whose alpha is exactly 0 or 255 everywhere. Transparent pixels turn black (colour data under alpha 0 is dropped); normal/glow/specular maps are never touched."
                     }
                 }
             }
@@ -72,6 +103,7 @@ Item {
                 onToggled: (checked) => bridge.resizingChecked = checked
 
                 Column {
+                    width: parent.width
                     visible: bridge.resizingChecked
                     spacing: NebulaTheme.spacingS
 
@@ -149,5 +181,6 @@ Item {
                 }
             }
         }
+    }
     }
 }

@@ -33,6 +33,7 @@ class AdvancedTexturesBridge final : public QObject
                    setCompressUncompressedOnly NOTIFY compressUncompressedOnlyChanged)
     Q_PROPERTY(bool mipmaps READ mipmaps WRITE setMipmaps NOTIFY mipmapsChanged)
     Q_PROPERTY(bool forceCrunch READ forceCrunch WRITE setForceCrunch NOTIFY forceCrunchChanged)
+    Q_PROPERTY(bool bc3ToBc1a READ bc3ToBc1a WRITE setBc3ToBc1a NOTIFY bc3ToBc1aChanged)
 
     Q_PROPERTY(
         bool resizingChecked READ resizingChecked WRITE setResizingChecked NOTIFY resizingCheckedChanged)
@@ -68,6 +69,10 @@ public:
     [[nodiscard]] auto forceCrunch() const -> bool;
     void setForceCrunch(bool value);
 
+    /// Opt-in: store diffuse DXT5 with exact 0/255 alpha as DXT1 (1-bit alpha).
+    [[nodiscard]] auto bc3ToBc1a() const -> bool;
+    void setBc3ToBc1a(bool value);
+
     [[nodiscard]] auto resizingChecked() const -> bool;
     void setResizingChecked(bool value);
 
@@ -97,6 +102,7 @@ signals:
     void compressUncompressedOnlyChanged();
     void mipmapsChanged();
     void forceCrunchChanged();
+    void bc3ToBc1aChanged();
     void resizingCheckedChanged();
     void resizeByRatioChanged();
     void widthChanged();
@@ -111,6 +117,7 @@ private:
     bool compress_uncompressed_only_  = false;
     bool mipmaps_                     = false;
     bool force_crunch_                = false;
+    bool bc3_to_bc1a_                 = false;
     bool resizing_checked_            = false;
     bool resize_by_ratio_  = true;
     int width_             = 2;

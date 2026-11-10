@@ -88,7 +88,7 @@ auto guess_file_type(const std::filesystem::path &path) noexcept -> std::optiona
 [[nodiscard]] auto steps_are_empty(const btu::tex::OptimizationSteps &steps) noexcept -> bool
 {
     return !steps.convert && !steps.mipmaps && !steps.add_transparent_alpha && !steps.resize
-           && !steps.bc3_to_bc1;
+           && !steps.bc3_to_bc1 && !steps.bc3_to_bc1a;
 }
 
 [[nodiscard]] auto human_readable_step_string(const btu::nif::OptimizationSteps &steps) noexcept -> std::string
@@ -115,6 +115,8 @@ auto guess_file_type(const std::filesystem::path &path) noexcept -> std::optiona
         strs.emplace_back(fmt::format("convert to {}", steps.best_format));
     if (steps.bc3_to_bc1)
         strs.emplace_back("opaque DXT5 -> DXT1");
+    if (steps.bc3_to_bc1a)
+        strs.emplace_back("binary-alpha DXT5 -> DXT1a");
     if (steps.mipmaps)
         strs.emplace_back("generate mipmaps");
     if (steps.add_transparent_alpha)
@@ -250,9 +252,10 @@ void log_file_no_work_required(const std::filesystem::path &path) noexcept
     return btu::tex::bc1_counterpart(static_cast<DXGI_FORMAT>(dxgi)) != DXGI_FORMAT_UNKNOWN;
 }
 
-/// With the crunch encoder selected, an opaque DXT5 whose only change is DXT5 -> DXT1 still goes
-/// through the DirectXTex path: that step is a lossless block copy, which beats a crunch re-encode.
-[[nodiscard]] auto is_lossless_bc3_to_bc1_only(const btu::modmanager::ModFile &file,
+/// With the crunch encoder selected, a DXT5 whose only change is DXT5 -> DXT1 (opaque: lossless block
+/// copy; binary alpha: copy plus DirectXTex re-encode of the transparent blocks) still goes through
+/// the DirectXTex path, since the crunch path has no such step.
+[[nodiscard]] auto is_bc3_to_bc1_only(const btu::modmanager::ModFile &file,
                                                const btu::tex::Settings &settings) noexcept -> bool
 {
     auto &content = *file.content;
@@ -262,7 +265,7 @@ void log_file_no_work_required(const std::filesystem::path &path) noexcept
     if (!tex)
         return false;
     const auto steps = btu::tex::compute_optimization_steps(*tex, settings);
-    return steps.bc3_to_bc1 && !steps.convert && !steps.resize && !steps.mipmaps
+    return (steps.bc3_to_bc1 || steps.bc3_to_bc1a) && !steps.convert && !steps.resize && !steps.mipmaps
            && !steps.add_transparent_alpha;
 }
 
@@ -271,7 +274,7 @@ void log_file_no_work_required(const std::filesystem::path &path) noexcept
                                    const OptimizeType type) noexcept
     -> tl::expected<std::vector<std::byte>, btu::common::Error>
 {
-    if (settings.force_crunch && can_use_crunch(settings) && !is_lossless_bc3_to_bc1_only(file, settings))
+    if (settings.force_crunch && can_use_crunch(settings) && !is_bc3_to_bc1_only(file, settings))
         return process_texture_crunch(BTU_FWD(file), settings, type);
 
     static auto compression_device = btu::tex::CompressionDevice();
@@ -399,6 +402,7 @@ auto process_file(btu::modmanager::ModFile &&file, const Settings &settings) noe
             tex_sets.mipmaps                    = profile.force_mipmaps_always;
             tex_sets.force_crunch               = tex_sets.force_crunch || profile.force_crunch_always;
             tex_sets.resize                     = profile.force_resize;
+            tex_sets.bc3_to_bc1a                = profile.force_bc3_to_bc1a;
 
             // force_process_textures is the sole on/off switch. force_crunch_always only picks the
             // encoder (crnlib vs DirectXTex) for files that are already being processed - it must

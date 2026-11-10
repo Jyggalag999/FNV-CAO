@@ -9,6 +9,7 @@
 // rather than stretching to fill the tab page's full height. See GeneralBSAModule.qml for the
 // full rationale.
 import QtQuick
+import QtQuick.Controls
 
 Item {
     anchors.fill: parent
@@ -18,6 +19,16 @@ Item {
     implicitHeight: contentBox.height
 
     // Unboxed - see GeneralBSAModule.qml for the full rationale (same module family).
+    // Scrolls when the content is taller than the tab (instead of being clipped).
+    Flickable {
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: contentBox.height
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.VerticalFlick
+        ScrollBar.vertical: ScrollBar { policy: size < 1.0 ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff } // visible whenever content overflows (AsNeeded hides it until scrolled)
+
     Item {
         id: contentBox
         width: parent.width
@@ -101,5 +112,6 @@ Item {
                 }
             }
         }
+    }
     }
 }

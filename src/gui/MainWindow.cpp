@@ -29,6 +29,8 @@
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWidget>
+#include <QScreen>
+#include <algorithm>
 #include <QTimer>
 #include <QUrl>
 
@@ -838,12 +840,42 @@ MainWindow::MainWindow(Settings settings, QWidget *parent)
         if (!tab_qml_widget || !tab_qml_widget->rootObject())
             return;
 
-        const int desired_content_height
-            = static_cast<int>(tab_qml_widget->rootObject()->property("implicitHeight").toReal());
-        const int height_delta           = current_tab->height() - desired_content_height;
+        // Fit to the TALLEST tab, not just the current one (tabs scroll if still too tall).
+        int desired_content_height = 0;
+        for (int i = 0; i < ui_->tabWidget->count(); ++i)
+        {
+            auto *qw = ui_->tabWidget->widget(i)->findChild<QQuickWidget *>();
+            if (qw && qw->rootObject())
+                desired_content_height = std::max(
+                    desired_content_height,
+                    static_cast<int>(qw->rootObject()->property("implicitHeight").toReal()));
+        }
+        int new_height = height() - (current_tab->height() - desired_content_height);
 
-        if (height_delta > 0)
-            resize(width(), height() - height_delta);
+        // Never exceed the screen the window is on.
+        if (const auto *scr = screen())
+        {
+            const auto avail = scr->availableGeometry();
+            new_height       = std::min(new_height, avail.height() - (frameGeometry().height() - height()));
+            if (width() > avail.width() - (frameGeometry().width() - width()))
+                resize(avail.width() - (frameGeometry().width() - width()), height());
+        }
+        new_height = std::max(new_height, 400);
+        resize(width(), new_height);
+
+        // The OS placed the window for its larger .ui default size, so after shrinking it can sit
+        // partly off-screen (title bar above the top edge). Pull the whole frame back inside.
+        if (const auto *scr = screen())
+        {
+            const auto avail  = scr->availableGeometry();
+            const int frame_w = width() + (frameGeometry().width() - geometry().width());
+            const int frame_h = height() + (frameGeometry().height() - geometry().height());
+            const int x = std::clamp(frameGeometry().x(), avail.left(),
+                                     std::max(avail.left(), avail.right() + 1 - frame_w));
+            const int y = std::clamp(frameGeometry().y(), avail.top(),
+                                     std::max(avail.top(), avail.bottom() + 1 - frame_h));
+            move(x, y);
+        }
     });
 }
 

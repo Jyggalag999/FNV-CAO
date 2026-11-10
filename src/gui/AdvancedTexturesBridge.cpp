@@ -78,6 +78,20 @@ void AdvancedTexturesBridge::setForceCrunch(bool value)
     emit forceCrunchChanged();
 }
 
+auto AdvancedTexturesBridge::bc3ToBc1a() const -> bool
+{
+    return bc3_to_bc1a_;
+}
+
+void AdvancedTexturesBridge::setBc3ToBc1a(bool value)
+{
+    if (bc3_to_bc1a_ == value)
+        return;
+
+    bc3_to_bc1a_ = value;
+    emit bc3ToBc1aChanged();
+}
+
 auto AdvancedTexturesBridge::resizingChecked() const -> bool
 {
     return resizing_checked_;

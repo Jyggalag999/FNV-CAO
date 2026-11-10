@@ -53,6 +53,7 @@ void AdvancedTexturesModule::settings_to_ui(const Settings &settings)
     bridge_.setCompressUncompressedOnly(profile.force_compress_uncompressed_only);
     bridge_.setMipmaps(profile.force_mipmaps_always);
     bridge_.setForceCrunch(profile.force_crunch_always);
+    bridge_.setBc3ToBc1a(profile.force_bc3_to_bc1a);
 
     // Resizing
     bridge_.setResizingChecked(true);
@@ -85,6 +86,7 @@ void AdvancedTexturesModule::ui_to_settings(Settings &settings) const
     profile.force_compress_uncompressed_only = bridge_.compressUncompressedOnly();
     profile.force_mipmaps_always             = bridge_.mipmaps();
     profile.force_crunch_always              = bridge_.forceCrunch();
+    profile.force_bc3_to_bc1a                = bridge_.bc3ToBc1a();
 
     // Resizing
     profile.force_resize = std::monostate{};

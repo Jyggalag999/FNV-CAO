@@ -1,5 +1,14 @@
 # Changelog (Fallout New Vegas fork)
 
+## 1.2.0
+
+- .kf animations can now be packed into BSAs (into the "- Meshes" archive).
+- Fixed UI scaling: tabs scroll instead of cutting off content, and the window fits on screen.
+- Fixed the progress window: the log fills the window, shows its last line and has a scrollbar.
+- Opaque DXT5 textures are stored as DXT1 (lossless).
+- New opt-in option: store binary-alpha diffuse DXT5 as DXT1 (1-bit alpha).
+- BSA size: default 1.95 GB per archive, maximum 4044 MB.
+
 ## 1.1.0
 
 ### New

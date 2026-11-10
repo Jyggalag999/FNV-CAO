@@ -10,6 +10,7 @@
 // background (#0d0818, from MainWindow.cpp's nebula_overrides) show through that leftover space
 // instead - a clean, intentional-looking transition rather than dead purple space.
 import QtQuick
+import QtQuick.Controls
 
 Item {
     id: root
@@ -29,6 +30,16 @@ Item {
     // further out) made the UI read as "boxes on boxes" over the nebula rather than the nebula
     // itself being the focus. MainWindow's single shared nebula_background_widget_ (see
     // NebulaBackground.qml) already shows straight through a plain Item with nothing to block it.
+    // Scrolls when the content is taller than the tab (instead of being clipped).
+    Flickable {
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: contentBox.height
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.VerticalFlick
+        ScrollBar.vertical: ScrollBar { policy: size < 1.0 ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff } // visible whenever content overflows (AsNeeded hides it until scrolled)
+
     Item {
         id: contentBox
         width: parent.width
@@ -128,7 +139,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         enabled: bridge.overrideMaxSize
                         from: 1
-                        to: 8192
+                        to: 4044 // 3.95 GiB
                         value: bridge.maxSizeMb
                         onValueEdited: (v) => bridge.maxSizeMb = v
                     }
@@ -140,11 +151,10 @@ Item {
                     wrapMode: Text.WordWrap
                     width: parent.width
                     text: "Archives are split into multiple parts once they'd exceed this size " +
-                          "(game default: " + bridge.defaultMaxSizeMb + " MB). Most archive " +
-                          "formats get unreliable right around 4096 MB, so stay comfortably under " +
-                          "that."
+                          "(default: " + bridge.defaultMaxSizeMb + " MB = 1.95 GB; max 4044 MB = 3.95 GB)."
                 }
             }
         }
+    }
     }
 }

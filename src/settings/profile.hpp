@@ -61,6 +61,9 @@ public:
 
     bool force_crunch_always = false;
 
+    // Opt-in: diffuse DXT5 whose alpha is exactly 0/255 everywhere -> DXT1 with 1-bit alpha.
+    bool force_bc3_to_bc1a = false;
+
     // Global override for resize: fully replaces whatever any per_file_settings_ pattern would
     // have asked for, same as the flags above. std::monostate means "never resize" - resize only
     // ever happens when this is explicitly set to a Dimension or ResizeRatio (i.e. the GUI's
@@ -158,7 +161,8 @@ private:
     [[nodiscard]] static auto set_fnv_settings(Profile profile) noexcept -> Profile;
 
 public:
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Profile,
+    // _WITH_DEFAULT: profiles saved before force_bc3_to_bc1a existed must still load.
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Profile,
                                    bsa_operation,
                                    bsa_make_dummy_plugins,
                                    bsa_allow_compression,
@@ -173,6 +177,7 @@ public:
                                    force_process_animations,
                                    force_pack_always,
                                    force_crunch_always,
+                                   force_bc3_to_bc1a,
                                    force_resize,
                                    gpu_index,
                                    optimization_mode,

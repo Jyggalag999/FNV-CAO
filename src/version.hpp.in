@@ -2,4 +2,4 @@
 
 constexpr auto k_cao_version = "@PROJECT_VERSION@";
 // Version of this Fallout New Vegas fork (release tags v<this>-fnv), shown next to the upstream version.
-constexpr auto k_cao_fnv_version = "1.1.0";
+constexpr auto k_cao_fnv_version = "1.2.0";
